@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "partenit-policy-dsl"
+version = "0.1.0"
+description = "YAML policy language, parser, and validator for Partenit safety rules"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+keywords = ["robotics", "safety", "policy", "dsl"]
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "partenit-core>=0.1.0",
+]
+
+[project.scripts]
+partenit-policy = "partenit.policy_dsl.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/partenit"]
+
+[tool.hatch.envs.default]
+dependencies = ["pytest>=7", "pytest-cov"]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest tests/ -v"

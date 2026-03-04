@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "partenit-safety-bench"
+version = "0.1.0"
+description = "Safety scenario simulation and benchmarking for Partenit"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "pydantic>=2.0",
+    "numpy>=1.24",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "partenit-core>=0.1.0",
+    "partenit-policy-dsl>=0.1.0",
+    "partenit-agent-guard>=0.1.0",
+    "partenit-adapters>=0.1.0",
+    "partenit-decision-log>=0.1.0",
+]
+
+[project.scripts]
+partenit-bench = "partenit.safety_bench.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/partenit"]
+
+[tool.hatch.envs.default]
+dependencies = ["pytest>=7", "pytest-cov"]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest tests/ -v"

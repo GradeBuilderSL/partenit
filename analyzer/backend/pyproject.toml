@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "partenit-analyzer-backend"
+version = "0.1.0"
+description = "FastAPI backend for the Partenit Analyzer web UI"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2",
+    "partenit-core>=0.1.0",
+    "partenit-decision-log>=0.1.0",
+    "partenit-agent-guard>=0.1.0",
+    "partenit-adapters>=0.1.0",
+    "partenit-policy-dsl>=0.1.0",
+    "prometheus_client>=0.20",
+]
+
+[project.scripts]
+partenit-analyzer = "partenit.analyzer.backend.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/partenit"]

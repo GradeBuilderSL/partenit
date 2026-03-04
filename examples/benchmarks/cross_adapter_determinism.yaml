@@ -1,0 +1,55 @@
+# Benchmark: cross_adapter_determinism
+#
+# Harness stub for Level 2 adapter cross-validation.
+#
+# Concept: same scenario run on MockRobotAdapter and HTTPRobotAdapter (with
+# a mock HTTP server) must produce byte-identical GuardDecisions.
+#
+# Level 1 (now): runs on MockRobotAdapter only — establishes the reference
+# GuardDecision fingerprint for each step.
+#
+# Level 2 (future): the BenchmarkRunner will be extended to:
+#   1. Spin up a mock HTTP server mirroring MockRobotAdapter output
+#   2. Run the same scenario via HTTPRobotAdapter
+#   3. Compare GuardDecision sequences — they must be identical
+#
+# This YAML defines the scenario. The cross-adapter assertion lives in
+# tests/test_benchmarks.py::test_cross_adapter_determinism_stub.
+
+scenario_id: cross_adapter_determinism
+description: >
+  Reference scenario for cross-adapter determinism validation.
+  Level 1: runs on MockRobotAdapter, records reference GuardDecisions.
+  Level 2 (future): HTTPRobotAdapter must produce identical decisions.
+
+robot:
+  start_position: [0, 0, 0]
+  goal_position: [8, 0, 0]
+  initial_speed: 1.0
+
+world:
+  humans:
+    - id: reference_human
+      start_position: [4, 1.5, 0]
+      velocity: [0, -0.8, 0]
+      arrival_time: 1.5
+      confidence: 0.92
+      sensor_trust: 1.0
+
+policies:
+  - policies.yaml
+
+expected_events:
+  - at_time: 2.7
+    event: slowdown   # guard slows at ~2.7s when distance drops below 1.5m
+
+# Cross-adapter assertion metadata (used by test harness, not scenario runner)
+cross_adapter:
+  level: 1               # currently Level 1 only
+  reference_adapter: mock
+  future_adapters:
+    - http
+    - ros2
+
+duration: 20.0
+dt: 0.1

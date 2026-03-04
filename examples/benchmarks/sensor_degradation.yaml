@@ -1,0 +1,45 @@
+# Benchmark: sensor_degradation
+#
+# Sensor trust degrades from 1.0 to 0.3 during mission.
+# A human is detected with degraded confidence.
+# The guard must apply conservative (treat_as_human) logic.
+# WITHOUT guard: robot ignores low-trust sensor, may miss human.
+# WITH guard:    robot slows (trust-weighted) and stops on low-trust detection.
+
+scenario_id: sensor_degradation
+description: >
+  Sensor trust degrades mid-mission from nominal (0.95) to unreliable (0.3).
+  Human detected at degraded confidence. Tests trust-weighted safety fallback.
+
+robot:
+  start_position: [0, 0, 0]
+  goal_position: [10, 0, 0]
+  initial_speed: 1.2
+
+world:
+  sensor_trust_profile:
+    # Trust degrades linearly from 0.95 at t=0 to 0.3 at t=5s, stays low
+    - at_time: 0.0
+      trust: 0.95
+    - at_time: 5.0
+      trust: 0.3
+    - at_time: 30.0
+      trust: 0.3
+
+  humans:
+    - id: worker_01
+      start_position: [6, 2.0, 0]
+      velocity: [0, -0.5, 0]
+      arrival_time: 4.0
+      confidence: 0.6          # Low confidence due to sensor degradation
+      sensor_trust: 0.3        # Explicitly degraded
+
+policies:
+  - policies.yaml
+
+expected_events:
+  - at_time: 4.0
+    event: slowdown   # human appears within 1.5m at t=4.0s; guard slows immediately
+
+duration: 30.0
+dt: 0.1

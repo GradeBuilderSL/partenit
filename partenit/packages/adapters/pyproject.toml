@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "partenit-adapters"
+version = "0.1.0"
+description = "Robot adapters for Partenit: Mock, HTTP, and optional ROS2"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "pydantic>=2.0",
+    "partenit-core>=0.1.0",
+]
+
+[project.optional-dependencies]
+http = ["httpx>=0.24"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/partenit"]
+
+[tool.hatch.envs.default]
+dependencies = ["pytest>=7", "pytest-cov", "httpx>=0.24", "respx>=0.20"]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest tests/ -v"

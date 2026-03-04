@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "partenit-core"
+version = "0.1.0"
+description = "Shared data contracts and types for the Partenit safety infrastructure"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+keywords = ["robotics", "safety", "ai-agents", "autonomous-systems"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "pydantic>=2.0",
+]
+
+[project.scripts]
+partenit-schema = "partenit.core.schema_export:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/partenit"]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest>=7",
+    "pytest-cov",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest tests/ -v"
+test-cov = "pytest tests/ --cov=partenit.core --cov-report=term-missing"

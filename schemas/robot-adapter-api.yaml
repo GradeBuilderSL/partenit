@@ -1,0 +1,350 @@
+openapi: 3.0.3
+info:
+  title: Partenit Robot HTTP Adapter API
+  version: 1.0.0
+  description: |
+    HTTP contract that any robot (or gateway) must implement to integrate
+    with Partenit via `HTTPRobotAdapter` or `IsaacSimAdapter`.
+
+    The three required endpoints carry the full observation, command, and
+    health lifecycle of a Partenit-guarded robot.
+
+    Canonical data types are defined in `partenit-core`:
+    - `StructuredObservation` — sensor output for one detected object
+    - `GuardDecision`         — admissibility decision from AgentGuard
+    - `RiskScore`             — composite risk with contributor breakdown
+
+    No breaking changes to this API without a major version bump.
+
+  contact:
+    name: Partenit Open Source
+    url: https://github.com/partenit/partenit
+
+servers:
+  - url: http://192.168.1.100
+    description: Example robot endpoint (replace with actual IP)
+
+paths:
+  /partenit/observations:
+    get:
+      operationId: getObservations
+      summary: Return current sensor observations
+      description: |
+        Returns all objects currently detected by the robot's perception system.
+        Partenit calls this endpoint at each guard evaluation cycle.
+
+        Return an empty array when no objects are detected.
+        Do NOT return 4xx for "no objects" — always return 200 with [].
+      responses:
+        "200":
+          description: Array of StructuredObservation objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StructuredObservation"
+              example:
+                - object_id: worker-1
+                  class_best: human
+                  class_set: [human]
+                  position_3d: [1.2, 0.0, 0.0]
+                  velocity: [0.0, -0.3, 0.0]
+                  confidence: 0.93
+                  depth_variance: 0.02
+                  sensor_trust: 0.95
+                  location_uncertain: false
+                  treat_as_human: true
+                  timestamp: "2025-01-01T12:00:00Z"
+                  frame_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                  source_id: camera_front
+        "500":
+          description: Sensor or backend error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /partenit/command:
+    post:
+      operationId: sendCommand
+      summary: Accept and execute a GuardDecision
+      description: |
+        Partenit sends a GuardDecision after evaluating an action request.
+
+        Robot MUST:
+        - Execute the action described in `modified_params` when `allowed=true`.
+        - Refuse to execute the original unsafe command when `allowed=false`.
+        - Optionally surface `rejection_reason` to operators or HMI.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuardDecision"
+            example:
+              allowed: true
+              modified_params:
+                zone: A3
+                speed: 0.3
+              rejection_reason: null
+              risk_score:
+                value: 0.64
+                contributors:
+                  distance: 0.88
+                  speed: 0.67
+                  trust: 0.0
+                plan_id: null
+                timestamp: "2025-01-01T12:00:00Z"
+              applied_policies: [human_proximity_slowdown]
+              suggested_alternative: null
+              timestamp: "2025-01-01T12:00:00Z"
+              latency_ms: 2.7
+      responses:
+        "200":
+          description: Command accepted and executed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResponse"
+              example:
+                status: ok
+        "500":
+          description: Robot failed to execute the command
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                code: ACTUATOR_TIMEOUT
+                message: Motion controller did not respond within 200 ms.
+
+  /partenit/health:
+    get:
+      operationId: getHealth
+      summary: Report robot and adapter health
+      description: |
+        Returns current health status of the robot.
+        Partenit calls this before starting a mission and periodically during operation.
+      responses:
+        "200":
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+                robot_id: warehouse-amr-01
+                timestamp: "2025-01-01T12:00:00Z"
+
+components:
+  schemas:
+
+    StructuredObservation:
+      type: object
+      description: |
+        One sensor detection cycle output for a single tracked object.
+        Produced by the robot's perception system and consumed by Partenit's
+        trust engine and agent guard.
+      required:
+        - object_id
+        - class_best
+        - position_3d
+        - confidence
+      properties:
+        object_id:
+          type: string
+          description: Stable identifier for this tracked object
+          example: worker-1
+        class_best:
+          type: string
+          description: Most likely class label
+          example: human
+        class_set:
+          type: array
+          items:
+            type: string
+          description: |
+            Top-k class candidates. Include "human" if there is any possibility
+            the object is a human — Partenit uses this conservatively.
+          default: []
+          example: [human]
+        position_3d:
+          type: array
+          items:
+            type: number
+          minItems: 3
+          maxItems: 3
+          description: "[x, y, z] in meters, robot-centric frame. x=forward, y=left, z=up."
+          example: [1.2, 0.0, 0.0]
+        velocity:
+          type: array
+          items:
+            type: number
+          minItems: 3
+          maxItems: 3
+          description: "[vx, vy, vz] in m/s"
+          default: [0.0, 0.0, 0.0]
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Detection confidence [0, 1]
+          example: 0.93
+        depth_variance:
+          type: number
+          minimum: 0.0
+          description: Depth sensor noise indicator [0, 1]
+          default: 0.0
+        sensor_trust:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Trust level of the source sensor, from SensorTrustModel [0, 1]
+          default: 1.0
+        location_uncertain:
+          type: boolean
+          description: True when confidence has decayed below 0.1
+          default: false
+        treat_as_human:
+          type: boolean
+          description: |
+            True when "human" appears in class_set (set automatically by Partenit).
+            Vendors may set this directly for convenience.
+          default: false
+        timestamp:
+          type: string
+          format: date-time
+          description: UTC timestamp of this detection
+        frame_hash:
+          type: string
+          nullable: true
+          description: SHA256 of the raw sensor frame (for audit trail)
+          example: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        source_id:
+          type: string
+          description: Sensor or camera identifier
+          default: unknown
+          example: camera_front
+
+    RiskScore:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Composite risk value [0, 1]. 1.0 = maximum risk.
+        contributors:
+          type: object
+          additionalProperties:
+            type: number
+          description: Feature → contribution breakdown
+        plan_id:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+
+    GuardDecision:
+      type: object
+      required:
+        - allowed
+        - risk_score
+      description: |
+        Result returned by AgentGuard for one action evaluation.
+        allowed=true  → execute (possibly with modified_params)
+        allowed=false → do not execute; see rejection_reason
+      properties:
+        allowed:
+          type: boolean
+        modified_params:
+          type: object
+          nullable: true
+          description: Rewritten params when guard clamped values
+        rejection_reason:
+          type: string
+          nullable: true
+        risk_score:
+          $ref: "#/components/schemas/RiskScore"
+        applied_policies:
+          type: array
+          items:
+            type: string
+          description: rule_id list of all policies that fired
+        suggested_alternative:
+          type: object
+          nullable: true
+          description: Guard-proposed alternative action params
+        timestamp:
+          type: string
+          format: date-time
+        latency_ms:
+          type: number
+          description: Wall-clock time for this guard check
+
+    CommandResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ok]
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [error]
+        code:
+          type: string
+          description: Machine-readable error code
+        message:
+          type: string
+          description: Human-readable error description
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - robot_id
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, e_stop, unreachable]
+          description: |
+            - ok         — robot ready to accept commands
+            - degraded   — operational but with warnings (e.g. low battery)
+            - e_stop     — emergency stop engaged
+            - unreachable — used by adapter when endpoint cannot be contacted
+        robot_id:
+          type: string
+          description: Stable robot identifier
+          example: warehouse-amr-01
+        timestamp:
+          type: string
+          format: date-time
+        mode:
+          type: string
+          description: Optional operational mode
+          example: auto
+        battery:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Battery percentage (optional)
+        errors:
+          type: array
+          items:
+            type: string
+          description: Active error codes (optional)

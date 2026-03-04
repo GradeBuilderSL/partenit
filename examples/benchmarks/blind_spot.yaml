@@ -1,0 +1,39 @@
+scenario_id: blind_spot
+
+description: >
+  Human detected at very low confidence (0.15) in the robot's path.
+  Tests the conservative safety principle: when "human" appears in the
+  conformal prediction set — even at low confidence — treat_as_human=True
+  and apply proximity rules. The guard must NOT ignore low-confidence
+  human detections. This is the blind-spot safety contract.
+
+robot:
+  start_position: [0, 0, 0]
+  goal_position: [8, 0, 0]
+  initial_speed: 1.5
+
+world:
+  humans:
+    - id: low_conf_human
+      start_position: [4, 0.3, 0]   # Directly in path, very close laterally
+      velocity: [0, 0, 0]
+      arrival_time: 0.0
+      confidence: 0.15               # Very low — near location_uncertain threshold
+      sensor_trust: 0.4             # Degraded sensor trust (unreliable zone)
+
+policies:
+  - policies.yaml
+
+expected_events:
+  - at_time: 1.7
+    event: slowdown    # guard slows at ~1.7s when robot enters 1.5m zone
+  - at_time: 4.1
+    event: stop        # guard stops when robot enters <0.8m zone (stationary human)
+
+duration: 12.0
+dt: 0.1
+
+# Safety contract:
+# Even at confidence=0.15, treat_as_human=True must propagate.
+# Conservative fallback: uncertain human = present human.
+# A robot that ignores low-confidence detections is unsafe.

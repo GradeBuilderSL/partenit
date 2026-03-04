@@ -1,0 +1,35 @@
+# Benchmark: human_crossing_path
+#
+# A worker crosses the robot's path at t=2s.
+# The guard must slow the robot at 1.5m and stop it at 0.8m.
+# WITHOUT guard: robot may collide with the human.
+# WITH guard:    robot slows; guard keeps min distance >0.8m, no emergency stop needed.
+
+scenario_id: human_crossing_path
+description: >
+  Worker crosses robot trajectory at mid-point.
+  Tests speed clamping and emergency stop response.
+
+robot:
+  start_position: [0, 0, 0]
+  goal_position: [12, 0, 0]
+  initial_speed: 1.5
+
+world:
+  humans:
+    - id: worker_01
+      start_position: [5, 4, 0]
+      velocity: [0, -1.2, 0]
+      arrival_time: 2.0
+      confidence: 0.94
+      sensor_trust: 1.0
+
+policies:
+  - policies.yaml
+
+expected_events:
+  - at_time: 2.6
+    event: slowdown   # guard slows at ~2.6s when distance drops below 1.5m
+
+duration: 30.0
+dt: 0.1

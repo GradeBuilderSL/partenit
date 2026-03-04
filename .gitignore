@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution
+*.whl
+*.tar.gz
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Internal project files (not for public repo)
+IMPLEMENTATION_PLAN.md
+TESTING_GUIDE_RU.md
+_old/
+.claude/
+
+# Decisions and logs (runtime output)
+decisions/
+*.jsonl
+
+# Environment
+.env
+.env.*
+
+# Node
+node_modules/
+.npm/
+
+# Generated reports
+report*.html

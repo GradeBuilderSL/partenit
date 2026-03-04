@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv pip install --system -e "partenit/packages/core"
+          uv pip install --system -e "partenit/packages/policy-dsl"
+          uv pip install --system -e "partenit/packages/trust-engine"
+          uv pip install --system -e "partenit/packages/agent-guard"
+          uv pip install --system -e "partenit/packages/adapters[http]"
+          uv pip install --system -e "partenit/packages/safety-bench"
+          uv pip install --system -e "partenit/packages/decision-log"
+          uv pip install --system -e "analyzer/backend"
+          uv pip install --system pytest pytest-anyio respx httpx
+
+      - name: Run tests
+        run: |
+          python -m pytest partenit/ tests/ analyzer/backend/tests/ -q --tb=short
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install ruff
+        run: uv pip install --system ruff
+
+      - name: Run ruff check
+        run: ruff check partenit/packages/*/src examples
+
+      - name: Run ruff format check
+        run: ruff format --check partenit/packages/*/src examples
+
+  schema-check:
+    name: Schema export check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install core
+        run: uv pip install --system -e "partenit/packages/core"
+
+      - name: Export schemas
+        run: |
+          python -c "
+          from pathlib import Path
+          from partenit.core.schema_export import export_schemas
+          import tempfile, json, sys
+
+          out = Path(tempfile.mkdtemp())
+          export_schemas(out)
+
+          committed = Path('schemas/DecisionPacket.schema.json')
+          generated = out / 'DecisionPacket.schema.json'
+
+          if committed.read_text() != generated.read_text():
+              print('Schema drift detected! Run: python -c \"from partenit.core.schema_export import export_schemas; from pathlib import Path; export_schemas(Path(\\\"schemas/\\\"))\"')
+              sys.exit(1)
+          print('Schemas are up-to-date.')
+          "

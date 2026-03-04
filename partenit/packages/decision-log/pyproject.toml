@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "partenit-decision-log"
+version = "0.1.0"
+description = "DecisionPacket logger, storage, and verification for Partenit"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "pydantic>=2.0",
+    "jsonlines>=3.0",
+    "partenit-core>=0.1.0",
+]
+
+[project.scripts]
+partenit-log = "partenit.decision_log.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/partenit"]
+
+[tool.hatch.envs.default]
+dependencies = ["pytest>=7", "pytest-cov"]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest tests/ -v"

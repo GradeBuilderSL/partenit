@@ -1,0 +1,25 @@
+{
+  "description": "Detached cryptographic fingerprint for a DecisionPacket.\nCan be stored separately and used to verify packet integrity.",
+  "properties": {
+    "fingerprint": {
+      "title": "Fingerprint",
+      "type": "string"
+    },
+    "packet_id": {
+      "title": "Packet Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    }
+  },
+  "required": [
+    "fingerprint",
+    "packet_id"
+  ],
+  "title": "DecisionFingerprint",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

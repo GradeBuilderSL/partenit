@@ -1,0 +1,43 @@
+rules:
+  - rule_id: human_proximity_slowdown
+    name: "Human Proximity Speed Limit"
+    priority: safety_critical
+    provenance: "ISO 3691-4 section 5.2"
+    condition:
+      type: threshold
+      metric: human.distance
+      operator: less_than
+      value: 1.5
+      unit: meters
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.3
+      unit: m/s
+
+  - rule_id: emergency_stop_human
+    name: "Emergency Stop — Human Too Close"
+    priority: safety_critical
+    provenance: "ISO 3691-4 section 5.3"
+    condition:
+      type: threshold
+      metric: human.distance
+      operator: less_than
+      value: 0.8
+      unit: meters
+    action:
+      type: block
+
+  - rule_id: speed_cap_nominal
+    name: "Nominal Speed Cap"
+    priority: task
+    condition:
+      type: threshold
+      metric: human.distance
+      operator: greater_than
+      value: 3.0
+    action:
+      type: clamp
+      parameter: speed
+      value: 1.5
+      unit: m/s

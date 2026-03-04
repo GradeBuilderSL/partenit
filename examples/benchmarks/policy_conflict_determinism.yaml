@@ -1,0 +1,44 @@
+# Benchmark: policy_conflict_determinism
+#
+# Two policies fire simultaneously with conflicting actions:
+#   - human_proximity_slowdown: clamp speed to 0.3 m/s (safety_critical)
+#   - speed_cap_nominal:        clamp speed to 1.5 m/s (task)
+#
+# The guard must resolve deterministically by priority.
+# safety_critical > task — so 0.3 m/s wins, always.
+# This test must produce identical outcomes across 100 repeated runs.
+
+scenario_id: policy_conflict_determinism
+description: >
+  Two rules fire at the same step with conflicting speed targets.
+  Verifies that priority-based conflict resolution is 100% deterministic.
+  Expected winner: human_proximity_slowdown (safety_critical, 0.3 m/s).
+
+robot:
+  start_position: [0, 0, 0]
+  goal_position: [10, 0, 0]
+  initial_speed: 1.5
+
+world:
+  humans:
+    - id: worker_01
+      start_position: [4, 1.2, 0]   # 1.2m lateral — within 1.5m threshold
+      velocity: [0, 0, 0]           # stationary
+      arrival_time: 0.0
+      confidence: 0.99
+      sensor_trust: 1.0
+
+policies:
+  - policies.yaml
+
+conflict_rules:
+  # Both rules should fire at the moment robot closes to < 1.5m distance
+  - rule_id: human_proximity_slowdown  # safety_critical → clamp 0.3
+  - rule_id: speed_cap_nominal         # task → clamp 1.5
+
+expected_events:
+  - at_time: 2.1
+    event: slowdown   # human_proximity_slowdown fires at ~2.1s; safety_critical wins → 0.3 m/s
+
+duration: 20.0
+dt: 0.1

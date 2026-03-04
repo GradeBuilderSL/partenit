@@ -1,0 +1,226 @@
+{
+  "$defs": {
+    "GuardDecision": {
+      "description": "Result returned by AgentGuard for a single action request.\n\nallowed=True  \u2192 execute (possibly with modified_params)\nallowed=False \u2192 do not execute; see rejection_reason",
+      "properties": {
+        "allowed": {
+          "title": "Allowed",
+          "type": "boolean"
+        },
+        "modified_params": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rewritten params if guard clamped values (e.g. speed reduced)",
+          "title": "Modified Params"
+        },
+        "rejection_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rejection Reason"
+        },
+        "risk_score": {
+          "$ref": "#/$defs/RiskScore"
+        },
+        "applied_policies": {
+          "description": "rule_id list of all policies that fired",
+          "items": {
+            "type": "string"
+          },
+          "title": "Applied Policies",
+          "type": "array"
+        },
+        "suggested_alternative": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Guard-proposed alternative action params",
+          "title": "Suggested Alternative"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "latency_ms": {
+          "default": 0.0,
+          "title": "Latency Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "allowed",
+        "risk_score"
+      ],
+      "title": "GuardDecision",
+      "type": "object"
+    },
+    "RiskScore": {
+      "description": "Composite risk score for a candidate action.\n\nvalue \u2208 [0, 1].  1.0 = maximum risk.\ncontributors maps feature name \u2192 weight used in scoring.",
+      "properties": {
+        "value": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Value",
+          "type": "number"
+        },
+        "contributors": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Feature \u2192 contribution breakdown",
+          "title": "Contributors",
+          "type": "object"
+        },
+        "plan_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plan Id"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "RiskScore",
+      "type": "object"
+    }
+  },
+  "description": "Full audit record for one decision cycle.\n\nThis is the Partenit open standard. Its JSON Schema is published at\n/schemas/DecisionPacket.schema.json. No breaking changes without major\nversion bump.",
+  "properties": {
+    "packet_id": {
+      "title": "Packet Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "mission_goal": {
+      "default": "",
+      "title": "Mission Goal",
+      "type": "string"
+    },
+    "action_requested": {
+      "title": "Action Requested",
+      "type": "string"
+    },
+    "action_params": {
+      "additionalProperties": true,
+      "title": "Action Params",
+      "type": "object"
+    },
+    "guard_decision": {
+      "$ref": "#/$defs/GuardDecision"
+    },
+    "observation_hashes": {
+      "description": "SHA256 hashes of StructuredObservations used",
+      "items": {
+        "type": "string"
+      },
+      "title": "Observation Hashes",
+      "type": "array"
+    },
+    "world_state_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "World State Hash"
+    },
+    "policy_bundle_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Policy Bundle Version"
+    },
+    "model_versions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "{'trust_engine': '0.1.0', ...}",
+      "title": "Model Versions",
+      "type": "object"
+    },
+    "latency_ms": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "{'policy_check': 2.1, 'risk_score': 0.8, 'total': 3.1}",
+      "title": "Latency Ms",
+      "type": "object"
+    },
+    "conflicts_resolved": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Conflicts Resolved",
+      "type": "array"
+    },
+    "violations_checked": {
+      "description": "List of rule_ids evaluated",
+      "items": {
+        "type": "string"
+      },
+      "title": "Violations Checked",
+      "type": "array"
+    },
+    "fingerprint": {
+      "default": "",
+      "title": "Fingerprint",
+      "type": "string"
+    }
+  },
+  "required": [
+    "action_requested",
+    "guard_decision"
+  ],
+  "title": "DecisionPacket",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
