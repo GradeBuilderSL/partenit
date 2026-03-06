@@ -22,7 +22,9 @@ dependencies = [
 ]
 
 [project.scripts]
-partenit-bench = "partenit.safety_bench.cli:main"
+partenit-bench    = "partenit.safety_bench.cli:main"
+partenit-scenario = "partenit.safety_bench.cli:main"
+partenit-eval     = "partenit.safety_bench.eval.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/partenit"]

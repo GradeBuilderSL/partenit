@@ -1,0 +1,16 @@
+[package]
+title = "Partenit Safety Overlay"
+description = "Real-time safety guard overlay for NVIDIA Isaac Sim — shows risk score, policy triggers, and trust sensor state."
+version = "0.1.0"
+authors = ["Partenit <hello@partenit.io>"]
+keywords = ["safety", "robotics", "guard", "risk"]
+category = "Simulation"
+icon = "data/icon.png"
+preview_image = "data/preview.png"
+changelog = "docs/CHANGELOG.md"
+readme = "docs/README.md"
+repository = "https://github.com/GradeBuilderSL/partenit"
+
+[dependencies]
+"omni.kit.uiapp" = {}
+"omni.ui" = {}

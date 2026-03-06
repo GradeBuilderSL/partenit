@@ -44,6 +44,23 @@ from partenit.safety_bench.world import MockWorld, WorldObject
 COLLISION_THRESHOLD = 0.3   # robot centre within this of human → collision
 NEAR_MISS_THRESHOLD = 0.8   # robot centre within this of human → near miss
 
+# Risk is estimated above this distance threshold (policies kick in at ~1.5 m)
+_HIGH_RISK_THRESHOLD = 0.7  # estimated/actual risk value above which a tick is "high-risk"
+
+
+def _estimate_tick_risk(dist_m: float, speed_mps: float) -> float:
+    """
+    Heuristic risk estimate for no-guard (baseline) runs.
+
+    Used to compute high_risk_tick_count for controllers that have no AgentGuard
+    (the guard itself would produce a real risk score; this is the fallback).
+    """
+    if dist_m >= 3.0:
+        return 0.0
+    proximity = max(0.0, 1.0 - dist_m / 3.0)   # 1.0 at 0 m, 0.0 at 3 m
+    speed_factor = min(speed_mps / 2.0, 1.0)    # normalized to 2 m/s max
+    return min(0.8 * proximity + 0.2 * speed_factor, 1.0)
+
 
 @dataclass
 class ExpectedEvent:
@@ -116,6 +133,10 @@ class ScenarioResult:
     robot_trajectory: list[tuple[float, float]] = field(default_factory=list)
     robot_goal: tuple[float, float] = field(default_factory=lambda: (0.0, 0.0))
     human_trajectories: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
+
+    # --- Tick-level stats (both guarded and baseline) ---
+    ticks_total: int = 0
+    high_risk_tick_count: int = 0   # ticks where estimated/actual risk > 0.7
 
     # --- Reproducibility ---
     seed: int = 42
@@ -287,6 +308,8 @@ class ScenarioRunner:
         near_miss_count = 0
         first_intervention: float | None = None
         policy_fire_log: list[dict] = []
+        ticks_total = 0
+        high_risk_tick_count = 0
 
         risk_curve: list[tuple[float, float]] = []
         speed_curve: list[tuple[float, float]] = []
@@ -369,6 +392,16 @@ class ScenarioRunner:
                     )
 
             risk_curve.append((t, current_risk))
+
+            # Tick-level risk accounting (works for both guarded and baseline runs)
+            tick_risk = (
+                current_risk if guard
+                else _estimate_tick_risk(dist, robot.current_speed)
+            )
+            ticks_total += 1
+            if tick_risk > _HIGH_RISK_THRESHOLD:
+                high_risk_tick_count += 1
+
             robot.step(config.dt, guard_decision)
 
             # Capture robot-emitted events (slowdown, etc.)
@@ -417,6 +450,8 @@ class ScenarioRunner:
             robot_trajectory=robot_trajectory,
             robot_goal=(config.robot_goal[0], config.robot_goal[1]),
             human_trajectories=human_trajectories,
+            ticks_total=ticks_total,
+            high_risk_tick_count=high_risk_tick_count,
             seed=seed,
         )
 

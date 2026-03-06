@@ -48,3 +48,5 @@ node_modules/
 
 # Generated reports
 report*.html
+eval_report.html
+*_eval.html
