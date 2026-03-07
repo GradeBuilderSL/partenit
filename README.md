@@ -5,6 +5,11 @@
 ![Tests](https://img.shields.io/badge/tests-175%20passing-brightgreen)
 ![Packages](https://img.shields.io/badge/packages-7%20open--source-blue)
 
+[![Isaac Sim](https://img.shields.io/badge/Isaac%20Sim-4.x%20%7C%205.x-76b900?logo=nvidia&logoColor=white)](examples/isaac_sim/)
+[![ROS2](https://img.shields.io/badge/ROS2-Humble%20%7C%20Iron%20%7C%20Jazzy-22314E?logo=ros&logoColor=white)](partenit/packages/adapters/src/partenit/adapters/ros2.py)
+[![Unitree](https://img.shields.io/badge/Unitree-H1%20%7C%20G1%20%7C%20B2-111111?logoColor=white)](partenit/packages/adapters/src/partenit/adapters/unitree/)
+[![Gazebo](https://img.shields.io/badge/Gazebo-Garden%20%7C%20Harmonic-FF6B35?logoColor=white)](partenit/packages/adapters/src/partenit/adapters/gazebo/)
+
 # Debugging & Safety Toolkit for Robot AI
 
 Partenit is an open-source middleware between your robot's high-level AI planner and its low-level motors.
