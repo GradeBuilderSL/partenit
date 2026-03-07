@@ -58,10 +58,24 @@ def main() -> None:
         print(
             "\n  ОШИБКА: мост недоступен.\n"
             "  Сначала запусти:\n"
-            "    cd _old/scripts/simulations/\n"
-            "    python h1_bridge_partenit.py\n"
+            "    cd examples/isaac_sim/\n"
+            "    /home/partenit/isaacsim/_build/linux-x86_64/release/python.sh h1_bridge.py\n"
         )
         raise SystemExit(1)
+
+    # Wait for physics loop to start (Isaac Sim loads scene asynchronously)
+    if not health.get("ready", False):
+        print("  Ожидаем запуска физики Isaac Sim", end="", flush=True)
+        for _ in range(60):  # max 60s
+            time.sleep(1.0)
+            h = adapter.get_health()
+            if h.get("ready"):
+                print(" готово!")
+                break
+            print(".", end="", flush=True)
+        else:
+            print("\n  ОШИБКА: физика не запустилась за 60 секунд")
+            raise SystemExit(1)
 
     obs = adapter.get_observations()
     print(f"  observations: {len(obs)} объект(ов)")

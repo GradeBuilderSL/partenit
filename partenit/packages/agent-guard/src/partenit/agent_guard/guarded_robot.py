@@ -157,10 +157,11 @@ class GuardedRobot:
 
     def stop(self) -> None:
         """Emergency stop — sends block decision directly to adapter."""
+        from partenit.core.models import RiskScore
         decision = GuardDecision(
             allowed=False,
             rejection_reason="manual_stop",
-            risk_score=None,  # type: ignore[arg-type]
+            risk_score=RiskScore(value=0.0, features={}),
             applied_policies=[],
         )
         try:

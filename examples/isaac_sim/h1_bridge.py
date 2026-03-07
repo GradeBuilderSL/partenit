@@ -66,6 +66,7 @@ class SharedState:
     chat_queue = []
     incoming_chat = []
     camera_bytes = None
+    physics_ready: bool = False  # True only after world.reset() + physics callback registered
 
 
 state = SharedState()
@@ -176,6 +177,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 "robot_id": "h1_isaac_sim",
                 "timestamp": time.time(),
                 "is_simulation": True,
+                "ready": state.physics_ready,  # False until physics loop is running
             })
 
         # --- Partenit: observations (human position in robot-centric frame) ---
@@ -491,6 +493,8 @@ def main():
 
     world.reset()
     world.add_physics_callback("partenit_step", on_physics_step)
+    state.physics_ready = True
+    print("[Bridge] Physics ready — Partenit API accepting commands")
 
     input_keyboard_mapping = {
         "UP":    [0.75, 0.0, 0.0],
