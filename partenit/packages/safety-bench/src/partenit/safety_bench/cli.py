@@ -101,8 +101,8 @@ def _cmd_run_all(args: argparse.Namespace) -> int:
 
 
 def _cmd_report(args: argparse.Namespace) -> int:
-    from partenit.safety_bench.scenario import ScenarioRunner
     from partenit.safety_bench.benchmarks.report_html import generate_html_report
+    from partenit.safety_bench.scenario import ScenarioRunner
 
     seed = args.seed
     directory = Path(args.path) if args.path else Path("./scenarios/")

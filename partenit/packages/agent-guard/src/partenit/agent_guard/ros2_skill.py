@@ -41,8 +41,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from partenit.core.models import GuardDecision
 from partenit.agent_guard.core import AgentGuard
+from partenit.core.models import GuardDecision
 
 logger = logging.getLogger(__name__)
 

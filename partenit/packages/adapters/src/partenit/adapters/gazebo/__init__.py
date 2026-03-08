@@ -21,7 +21,7 @@ the Partenit core packages, as required by the architecture.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from partenit.adapters.base import RobotAdapter
@@ -75,7 +75,7 @@ class GazeboAdapter(RobotAdapter):
         health = self._http.get_health()
         health.setdefault("status", "ok")
         health.setdefault("robot_id", self._robot_id)
-        health.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+        health.setdefault("timestamp", datetime.now(UTC).isoformat())
         health["is_simulation"] = True
         health["simulator"] = "gazebo"
         return health
@@ -86,7 +86,7 @@ class GazeboAdapter(RobotAdapter):
     def close(self) -> None:
         self._http.close()
 
-    def __enter__(self) -> "GazeboAdapter":
+    def __enter__(self) -> GazeboAdapter:
         return self
 
     def __exit__(self, *_: object) -> None:

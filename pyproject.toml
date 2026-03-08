@@ -1,11 +1,20 @@
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 ignore = ["E501"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["partenit"]
+
+[tool.ruff.lint.per-file-ignores]
+# Isaac Sim bridge: SimulationApp must be initialized before other imports
+"examples/isaac_sim/h1_bridge.py" = ["E402", "N806"]
+# Sim helper scripts copied from _old/: acceptable style for demo code
+"examples/isaac_sim/sim_frontend.py" = ["N806"]
+"examples/isaac_sim/sim_camera.py" = ["N806"]
 
 [tool.mypy]
 python_version = "3.11"

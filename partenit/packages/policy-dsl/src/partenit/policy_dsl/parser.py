@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import yaml
 
@@ -122,7 +122,7 @@ class PolicyParser:
     - A directory of .yaml / .yml files
     """
 
-    def load_file(self, path: Union[str, Path]) -> list[PolicyRule]:
+    def load_file(self, path: str | Path) -> list[PolicyRule]:
         """Load rules from a single YAML file."""
         path = Path(path)
         if not path.exists():
@@ -131,7 +131,7 @@ class PolicyParser:
             raw = yaml.safe_load(f)
         return self._parse_raw(raw, source=str(path))
 
-    def load_dir(self, directory: Union[str, Path]) -> list[PolicyRule]:
+    def load_dir(self, directory: str | Path) -> list[PolicyRule]:
         """Load all .yaml / .yml rules from a directory."""
         directory = Path(directory)
         if not directory.is_dir():

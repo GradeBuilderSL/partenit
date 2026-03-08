@@ -4,13 +4,12 @@ Call before importing modules that need LLM_PROVIDER, *_API_KEY, etc.
 """
 
 import os
-from typing import List, Optional
 
 
 def load_project_env(
-    script_dir: Optional[str] = None,
-    extra_paths: Optional[List[str]] = None,
-) -> Optional[str]:
+    script_dir: str | None = None,
+    extra_paths: list[str] | None = None,
+) -> str | None:
     """
     Load .env from standard project locations and optional extra paths.
     Returns path that was loaded, or None if none found.

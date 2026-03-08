@@ -16,7 +16,6 @@ from pathlib import Path
 
 from partenit.core.models import DecisionFingerprint, DecisionPacket
 
-
 _SCHEMAS: list[tuple[str, type]] = [
     ("DecisionPacket.schema.json", DecisionPacket),
     ("DecisionFingerprint.schema.json", DecisionFingerprint),

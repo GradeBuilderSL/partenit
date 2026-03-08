@@ -11,7 +11,7 @@ the Partenit core packages, as required by the architecture.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from partenit.adapters.base import RobotAdapter
@@ -77,7 +77,7 @@ class IsaacSimAdapter(RobotAdapter):
         if "robot_id" not in health:
             health["robot_id"] = self._robot_id
         if "timestamp" not in health:
-            health["timestamp"] = datetime.now(timezone.utc).isoformat()
+            health["timestamp"] = datetime.now(UTC).isoformat()
         health["is_simulation"] = True
         return health
 
@@ -92,7 +92,7 @@ class IsaacSimAdapter(RobotAdapter):
         """Close underlying HTTP resources."""
         self._http.close()
 
-    def __enter__(self) -> "IsaacSimAdapter":  # pragma: no cover - trivial
+    def __enter__(self) -> IsaacSimAdapter:  # pragma: no cover - trivial
         return self
 
     def __exit__(self, *_: object) -> None:  # pragma: no cover - trivial

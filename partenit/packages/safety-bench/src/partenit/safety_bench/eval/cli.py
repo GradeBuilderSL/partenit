@@ -15,8 +15,8 @@ from pathlib import Path
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
-    from partenit.safety_bench.eval.runner import ControllerConfig, EvalRunner
     from partenit.safety_bench.eval.report_eval import generate_eval_html
+    from partenit.safety_bench.eval.runner import ControllerConfig, EvalRunner
 
     controllers: list[ControllerConfig] = []
 
@@ -56,8 +56,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 
 def _cmd_run_suite(args: argparse.Namespace) -> int:
-    from partenit.safety_bench.eval.runner import ControllerConfig, EvalRunner
     from partenit.safety_bench.eval.report_eval import generate_eval_html
+    from partenit.safety_bench.eval.runner import ControllerConfig, EvalRunner
 
     controllers = [
         ControllerConfig("baseline", policy_paths=[]),

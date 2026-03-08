@@ -10,11 +10,11 @@ from __future__ import annotations
 import hashlib
 import json
 import random
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
-from partenit.core.models import GuardDecision, StructuredObservation
 from partenit.adapters.base import RobotAdapter
+from partenit.core.models import GuardDecision, StructuredObservation
 
 
 class MockRobotAdapter(RobotAdapter):
@@ -88,7 +88,7 @@ class MockRobotAdapter(RobotAdapter):
     def get_observations(self) -> list[StructuredObservation]:
         """Return current scene as StructuredObservation list."""
         obs: list[StructuredObservation] = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for item in self._scene:
             data = {
                 "object_id": item.get("object_id", "obj-0"),
@@ -115,7 +115,7 @@ class MockRobotAdapter(RobotAdapter):
         return {
             "status": "ok" if self._healthy else "degraded",
             "robot_id": self.robot_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "is_simulation": True,
         }
 

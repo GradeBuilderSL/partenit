@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import abc
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import jsonlines
@@ -99,7 +99,7 @@ class LocalFileStorage(DecisionStorage):
         Read all packets from the given date's file.
         Defaults to today.
         """
-        path = self._path_for(date or datetime.now(timezone.utc))
+        path = self._path_for(date or datetime.now(UTC))
         if not path.exists():
             return []
         packets: list[DecisionPacket] = []
@@ -120,7 +120,7 @@ class LocalFileStorage(DecisionStorage):
         for path in sorted(self.storage_dir.glob("*.jsonl")):
             try:
                 file_date = datetime.strptime(path.stem, "%Y-%m-%d").replace(
-                    tzinfo=timezone.utc
+                    tzinfo=UTC
                 )
                 if start.date() <= file_date.date() <= end.date():
                     packets.extend(self.read_all(file_date))
@@ -129,7 +129,7 @@ class LocalFileStorage(DecisionStorage):
         # Filter by exact timestamp
         return [
             p for p in packets
-            if start <= p.timestamp.replace(tzinfo=timezone.utc) <= end
+            if start <= p.timestamp.replace(tzinfo=UTC) <= end
         ]
 
     def list_dates(self) -> list[str]:

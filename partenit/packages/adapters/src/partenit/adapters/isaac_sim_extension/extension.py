@@ -191,7 +191,7 @@ def demo() -> None:
         print("ERROR: partenit not installed. Run: pip install partenit-core partenit-agent-guard partenit-adapters")
         return
 
-    print(f"Partenit Safety Overlay — standalone demo")
+    print("Partenit Safety Overlay — standalone demo")
     print(f"Connecting to Isaac gateway: {_DEFAULT_GATEWAY}\n")
 
     adapter = IsaacSimAdapter(base_url=_DEFAULT_GATEWAY)

@@ -222,7 +222,7 @@ def run_demo(use_real_llm: bool = False) -> None:
     print(f"  Blocked:           {blocked}")
     all_packets = log.recent(100)
     print(f"  Decisions logged:  {len(all_packets)}")
-    print(f"\n  Every decision has a cryptographic fingerprint.")
+    print("\n  Every decision has a cryptographic fingerprint.")
     print(f"  All {len(all_packets)} packets verified: {all(log.verify_packet(p) for p in all_packets)}")
     print()
     print("  What this demo shows:")

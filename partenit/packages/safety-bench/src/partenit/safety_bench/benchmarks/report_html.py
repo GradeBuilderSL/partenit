@@ -13,7 +13,7 @@ No external dependencies — pure Python stdlib + SVG generation.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -107,12 +107,12 @@ def _svg_timeseries(
     events: list[dict] | None = None,
 ) -> str:
     """Render a simple SVG line chart for a (time, value) series."""
-    W, H, P = _CHART_W, _CHART_H, _PAD
+    w, h, p = _CHART_W, _CHART_H, _PAD
 
     if not data:
         return (
-            f'<svg width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">'
-            f'<rect width="{W}" height="{H}" fill="#1a1f2e" rx="6"/>'
+            f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
+            f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="6"/>'
             f'<text x="20" y="50" fill="#475569" font-size="12">No data</text></svg>'
         )
 
@@ -125,10 +125,10 @@ def _svg_timeseries(
         y_max = 1.0
 
     def tx(t: float) -> float:
-        return P + (t / t_max) * (W - 2 * P)
+        return p + (t / t_max) * (w - 2 * p)
 
     def ty(v: float) -> float:
-        return H - P - (min(v, y_max) / y_max) * (H - 2 * P)
+        return h - p - (min(v, y_max) / y_max) * (h - 2 * p)
 
     # Clip area (filled below the line)
     clip_pts = (
@@ -144,9 +144,9 @@ def _svg_timeseries(
         val = frac * y_max
         y = ty(val)
         grid += (
-            f'<line x1="{P}" y1="{y:.1f}" x2="{W-P}" y2="{y:.1f}" '
+            f'<line x1="{p}" y1="{y:.1f}" x2="{w-p}" y2="{y:.1f}" '
             f'stroke="#1e2d40" stroke-width="1"/>'
-            f'<text x="{P-4}" y="{y+4:.1f}" fill="#334155" font-size="9" '
+            f'<text x="{p-4}" y="{y+4:.1f}" fill="#334155" font-size="9" '
             f'text-anchor="end">{val:.2f}</text>'
         )
 
@@ -157,9 +157,9 @@ def _svg_timeseries(
         t_val = t_max * i / n
         x = tx(t_val)
         xticks += (
-            f'<line x1="{x:.1f}" y1="{H-P}" x2="{x:.1f}" y2="{H-P+4}" '
+            f'<line x1="{x:.1f}" y1="{h-p}" x2="{x:.1f}" y2="{h-p+4}" '
             f'stroke="#334155" stroke-width="1"/>'
-            f'<text x="{x:.1f}" y="{H-P+14}" fill="#334155" font-size="9" '
+            f'<text x="{x:.1f}" y="{h-p+14}" fill="#334155" font-size="9" '
             f'text-anchor="middle">{t_val:.1f}s</text>'
         )
 
@@ -171,21 +171,21 @@ def _svg_timeseries(
             ec = "#ef4444" if evt.get("type") == "stop" else "#f59e0b"
             ex = tx(et)
             evt_marks += (
-                f'<line x1="{ex:.1f}" y1="{P}" x2="{ex:.1f}" y2="{H-P}" '
+                f'<line x1="{ex:.1f}" y1="{p}" x2="{ex:.1f}" y2="{h-p}" '
                 f'stroke="{ec}" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>'
             )
 
     return (
-        f'<svg width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">'
-        f'<rect width="{W}" height="{H}" fill="#1a1f2e" rx="6"/>'
+        f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
+        f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="6"/>'
         f'{grid}'
-        f'<line x1="{P}" y1="{P//2}" x2="{P}" y2="{H-P}" stroke="#2d3f55" stroke-width="1"/>'
-        f'<line x1="{P}" y1="{H-P}" x2="{W-P}" y2="{H-P}" stroke="#2d3f55" stroke-width="1"/>'
+        f'<line x1="{p}" y1="{p//2}" x2="{p}" y2="{h-p}" stroke="#2d3f55" stroke-width="1"/>'
+        f'<line x1="{p}" y1="{h-p}" x2="{w-p}" y2="{h-p}" stroke="#2d3f55" stroke-width="1"/>'
         f'{xticks}'
         f'{evt_marks}'
         f'<polygon points="{clip_pts}" fill="{color}" opacity="0.12"/>'
         f'<polyline points="{line_pts}" fill="none" stroke="{color}" stroke-width="2"/>'
-        f'<text x="{W//2}" y="14" fill="#64748b" font-size="10" '
+        f'<text x="{w//2}" y="14" fill="#64748b" font-size="10" '
         f'text-anchor="middle" font-style="italic">{title}</text>'
         f'</svg>'
     )
@@ -198,7 +198,7 @@ def _svg_2d_replay(
     events: list[dict] | None = None,
 ) -> str:
     """Render a top-down 2D SVG replay of the scenario."""
-    W, H, P = _CHART_W, 340, 38
+    w, h, pad = _CHART_W, 340, 38
     human_palette = ["#f87171", "#fb923c", "#facc15", "#a78bfa", "#34d399"]
 
     all_x = [p[0] for p in robot_trajectory] + [robot_goal[0]]
@@ -209,8 +209,8 @@ def _svg_2d_replay(
 
     if not all_x:
         return (
-            f'<svg width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">'
-            f'<rect width="{W}" height="{H}" fill="#1a1f2e" rx="6"/>'
+            f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
+            f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="6"/>'
             f'<text x="20" y="40" fill="#475569" font-size="12">No trajectory data</text>'
             f'</svg>'
         )
@@ -221,11 +221,11 @@ def _svg_2d_replay(
     x_range = max(x_max - x_min, 0.1)
     y_range = max(y_max - y_min, 0.1)
 
-    vp_w = W - 2 * P
-    vp_h = H - 2 * P
+    vp_w = w - 2 * pad
+    vp_h = h - 2 * pad
     scale = min(vp_w / x_range, vp_h / y_range)
-    x_off = P + (vp_w - x_range * scale) / 2
-    y_off = P + (vp_h - y_range * scale) / 2
+    x_off = pad + (vp_w - x_range * scale) / 2
+    y_off = pad + (vp_h - y_range * scale) / 2
 
     def tx(x: float) -> float:
         return x_off + (x - x_min) * scale
@@ -287,21 +287,21 @@ def _svg_2d_replay(
                 )
 
     legend = (
-        f'<circle cx="50" cy="{H-15}" r="5" fill="#3b82f6"/>'
-        f'<text x="60" y="{H-11}" fill="#60a5fa" font-size="10">Robot</text>'
-        f'<circle cx="115" cy="{H-15}" r="6" fill="none" stroke="#22c55e" stroke-width="2"/>'
-        f'<text x="126" y="{H-11}" fill="#22c55e" font-size="10">Goal</text>'
-        f'<circle cx="180" cy="{H-15}" r="5" fill="#f87171"/>'
-        f'<text x="190" y="{H-11}" fill="#f87171" font-size="10">Human</text>'
-        f'<circle cx="248" cy="{H-15}" r="5" fill="#f59e0b" opacity="0.8"/>'
-        f'<text x="258" y="{H-11}" fill="#f59e0b" font-size="10">Slow</text>'
-        f'<circle cx="300" cy="{H-15}" r="7" fill="none" stroke="#ef4444" stroke-width="1.5"/>'
-        f'<text x="312" y="{H-11}" fill="#ef4444" font-size="10">Stop</text>'
+        f'<circle cx="50" cy="{h-15}" r="5" fill="#3b82f6"/>'
+        f'<text x="60" y="{h-11}" fill="#60a5fa" font-size="10">Robot</text>'
+        f'<circle cx="115" cy="{h-15}" r="6" fill="none" stroke="#22c55e" stroke-width="2"/>'
+        f'<text x="126" y="{h-11}" fill="#22c55e" font-size="10">Goal</text>'
+        f'<circle cx="180" cy="{h-15}" r="5" fill="#f87171"/>'
+        f'<text x="190" y="{h-11}" fill="#f87171" font-size="10">Human</text>'
+        f'<circle cx="248" cy="{h-15}" r="5" fill="#f59e0b" opacity="0.8"/>'
+        f'<text x="258" y="{h-11}" fill="#f59e0b" font-size="10">Slow</text>'
+        f'<circle cx="300" cy="{h-15}" r="7" fill="none" stroke="#ef4444" stroke-width="1.5"/>'
+        f'<text x="312" y="{h-11}" fill="#ef4444" font-size="10">Stop</text>'
     )
 
     return (
-        f'<svg width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">'
-        f'<rect width="{W}" height="{H}" fill="#1a1f2e" rx="6"/>'
+        f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
+        f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="6"/>'
         f'<polyline points="{robot_pts}" fill="none" stroke="#3b82f6" stroke-width="2.5"/>'
         f'{human_svgs}'
         f'{stop_marks}'
@@ -364,7 +364,7 @@ def _adm_bar(adm: float) -> str:
     )
 
 
-def _render_run(result: "ScenarioResult") -> str:
+def _render_run(result: ScenarioResult) -> str:
     badge = (
         '<span class="badge-g">WITH GUARD</span>'
         if result.with_guard
@@ -469,7 +469,7 @@ def _render_run(result: "ScenarioResult") -> str:
             f'</div>'
         )
     tl_inner = (
-        f'<div class="timeline">'
+        '<div class="timeline">'
         + (tl_rows if tl_rows else '<span style="color:#334155">No events</span>')
         + '</div>'
     )
@@ -497,7 +497,7 @@ def _render_run(result: "ScenarioResult") -> str:
     policy_section = ""
     if result.policy_fire_log:
         pol_inner = (
-            f'<div class="timeline">'
+            '<div class="timeline">'
             + (pol_rows or '<span style="color:#334155">None</span>')
             + '</div>'
         )
@@ -529,8 +529,8 @@ def _render_run(result: "ScenarioResult") -> str:
 # Comparison table
 # ---------------------------------------------------------------------------
 
-def _render_comparison(g: "ScenarioResult", ng: "ScenarioResult") -> str:
-    def _dist(r: "ScenarioResult") -> str:
+def _render_comparison(g: ScenarioResult, ng: ScenarioResult) -> str:
+    def _dist(r: ScenarioResult) -> str:
         return f"{r.min_human_distance_m:.2f}" if r.min_human_distance_m < 1e5 else "∞"
 
     rows_data = [
@@ -574,7 +574,7 @@ def _render_comparison(g: "ScenarioResult", ng: "ScenarioResult") -> str:
 # ---------------------------------------------------------------------------
 
 def generate_html_report(
-    results: list["ScenarioResult"],
+    results: list[ScenarioResult],
     title: str = "Partenit Safety Bench Report",
 ) -> str:
     """
@@ -591,7 +591,7 @@ def generate_html_report(
         Complete HTML string (UTF-8 safe, no external dependencies).
     """
     # Group by scenario_id
-    groups: dict[str, list["ScenarioResult"]] = {}
+    groups: dict[str, list[ScenarioResult]] = {}
     for r in results:
         groups.setdefault(r.scenario_id, []).append(r)
 
@@ -614,7 +614,7 @@ def generate_html_report(
 
         sections.append(f'<div class="scenario"><h2>{sid}</h2>{inner}</div>')
 
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     body = "\n".join(sections)
 
     return (

@@ -1,9 +1,11 @@
 # sim_frontend.py - UI/frontend for Isaac Sim simulation
 # Reusable panel: chat, mode, scenarios, task, debug tunables. Logic via callbacks only.
 
-import omni.ui as ui
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, List, Tuple, Optional, Dict, Any
+from typing import Any
+
+import omni.ui as ui
 
 
 def wrap_text(text: str, width: int = 80) -> str:
@@ -27,9 +29,9 @@ def wrap_text(text: str, width: int = 80) -> str:
 @dataclass
 class SimGUICallbacks:
     """Callbacks for PartenitDemoGUI. Main script provides implementations. No hasattr in main path."""
-    get_latest_camera_bytes: Callable[[], Optional[bytes]]
+    get_latest_camera_bytes: Callable[[], bytes | None]
     add_user_message: Callable[[str], None]  # Show user msg immediately (main thread)
-    on_send_command: Callable[[str, Optional[bytes]], None]
+    on_send_command: Callable[[str, bytes | None], None]
     on_toggle_enable: Callable[[], None]
     get_enabled: Callable[[], bool]
     on_scenario_hri: Callable[[], None]
@@ -38,14 +40,14 @@ class SimGUICallbacks:
     on_clear: Callable[[], None]
     on_learn_map: Callable[[], None]
     get_trace: Callable[[], str]
-    get_chat_history: Callable[[], List[Tuple[str, str]]]
+    get_chat_history: Callable[[], list[tuple[str, str]]]
     set_trace: Callable[[str], None]
     # Task API - primary input to pipeline
     get_task: Callable[[], str]
     set_task: Callable[[str], None]
     # Sim tunables - for Dev/Debug panel (battery, human, distance, carrying)
-    get_sim_tunables: Callable[[], Dict[str, Any]]
-    set_sim_tunables: Callable[[Dict[str, Any]], None]
+    get_sim_tunables: Callable[[], dict[str, Any]]
+    set_sim_tunables: Callable[[dict[str, Any]], None]
 
 
 class PartenitDemoGUI:
@@ -127,7 +129,7 @@ class PartenitDemoGUI:
         enabled = self.callbacks.get_enabled()
         self.enable_btn.text = "DISABLE BRAIN" if enabled else "ENABLE BRAIN"
         self.enable_btn.style = {"background_color": (0.6, 0.2, 0.2) if enabled else (0.2, 0.6, 0.3), "font_weight": "bold", "font_size": 14}
-        trace = self.callbacks.get_trace() or "READY"
+        self.callbacks.get_trace() or "READY"
         # trace_text removed from UI
         chat_history = self.callbacks.get_chat_history()
         if chat_history:

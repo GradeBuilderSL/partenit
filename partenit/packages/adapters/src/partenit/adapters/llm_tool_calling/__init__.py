@@ -23,7 +23,7 @@ This module is only a translation/convenience layer.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from partenit.agent_guard.core import AgentGuard

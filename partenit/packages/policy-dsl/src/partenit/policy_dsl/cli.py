@@ -88,8 +88,8 @@ def _cmd_sim(args: argparse.Namespace) -> int:
 
     Shows which rules fire and what the effective output parameters are.
     """
-    from partenit.policy_dsl.parser import PolicyParser
     from partenit.policy_dsl.evaluator import PolicyEvaluator
+    from partenit.policy_dsl.parser import PolicyParser
 
     # Build context from CLI args
     context: dict = {}
@@ -130,8 +130,8 @@ def _print_sim_result(action: str, speed, context: dict, result, all_rules) -> N
         from rich.table import Table
         console = Console()
 
-        console.print(f"\n[bold cyan]Policy Simulator[/]\n")
-        console.print(f"[bold]Input:[/]")
+        console.print("\n[bold cyan]Policy Simulator[/]\n")
+        console.print("[bold]Input:[/]")
         console.print(f"  action:          {action}")
         if speed is not None:
             console.print(f"  speed:           {speed} m/s")
@@ -182,7 +182,7 @@ def _print_sim_result(action: str, speed, context: dict, result, all_rules) -> N
 
     except ImportError:
         # Plain fallback
-        print(f"\nPolicy Simulator")
+        print("\nPolicy Simulator")
         print(f"Input: action={action}, context={context}, policies={len(all_rules)}")
         fired_ids = {r.rule_id for r in result.fired_rules}
         print("\nRules:")

@@ -13,8 +13,7 @@ Below threshold 0.1 → mark as location_uncertain.
 from __future__ import annotations
 
 import math
-from datetime import datetime, timedelta, timezone
-
+from datetime import UTC, datetime
 
 _DEFAULT_LAMBDAS: dict[str, float] = {
     "human": 0.5,        # Humans move — decay fast (half-life ~2s)
@@ -45,7 +44,7 @@ class TrackedObject:
         self.object_id = object_id
         self.class_label = class_label
         self._initial_confidence = initial_confidence
-        self._last_seen: datetime = datetime.now(timezone.utc)
+        self._last_seen: datetime = datetime.now(UTC)
         self._lambda = lambda_override or _DEFAULT_LAMBDAS.get(
             class_label, _DEFAULT_LAMBDAS["default"]
         )
@@ -53,12 +52,12 @@ class TrackedObject:
     def observe(self, confidence: float) -> None:
         """Update with a fresh detection. Resets decay clock."""
         self._initial_confidence = confidence
-        self._last_seen = datetime.now(timezone.utc)
+        self._last_seen = datetime.now(UTC)
 
     def confidence_at(self, t: datetime | None = None) -> float:
         """Compute decayed confidence at time t (default: now)."""
         if t is None:
-            t = datetime.now(timezone.utc)
+            t = datetime.now(UTC)
         elapsed = (t - self._last_seen).total_seconds()
         elapsed = max(elapsed, 0.0)
         return self._initial_confidence * math.exp(-self._lambda * elapsed)
@@ -69,7 +68,7 @@ class TrackedObject:
 
     @property
     def seconds_since_seen(self) -> float:
-        return (datetime.now(timezone.utc) - self._last_seen).total_seconds()
+        return (datetime.now(UTC) - self._last_seen).total_seconds()
 
 
 class ObjectConfidenceModel:

@@ -8,8 +8,7 @@ at each simulation tick.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 
 
 @dataclass

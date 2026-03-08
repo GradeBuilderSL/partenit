@@ -19,10 +19,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Add repo root so "examples/warehouse/policies.yaml" resolves
-repo_root = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(repo_root))
-
 from partenit.adapters.isaac_sim import IsaacSimAdapter
 from partenit.agent_guard import GuardedRobot
 

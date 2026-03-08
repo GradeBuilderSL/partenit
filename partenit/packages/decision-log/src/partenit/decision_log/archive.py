@@ -6,8 +6,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 
 from partenit.core.models import DecisionPacket
 from partenit.decision_log.storage import LocalFileStorage
@@ -61,9 +60,9 @@ class DecisionArchive:
     ) -> list[DecisionPacket]:
         """Return packets in the given time range."""
         if time_from is None:
-            time_from = datetime(2020, 1, 1, tzinfo=timezone.utc)
+            time_from = datetime(2020, 1, 1, tzinfo=UTC)
         if time_to is None:
-            time_to = datetime(2100, 1, 1, tzinfo=timezone.utc)
+            time_to = datetime(2100, 1, 1, tzinfo=UTC)
         return self._storage.read_range(time_from, time_to)
 
     def verify_chain(self, packets: list[DecisionPacket]) -> ChainVerificationResult:
@@ -97,7 +96,7 @@ class DecisionArchive:
         lines = [
             "# Partenit Audit Report",
             "",
-            f"**Generated:** {datetime.now(timezone.utc).isoformat()}",
+            f"**Generated:** {datetime.now(UTC).isoformat()}",
             f"**Packets:** {total}",
             f"**Allowed:** {allowed}  **Blocked:** {blocked}",
             f"**Block rate:** {blocked / total * 100:.1f}%",

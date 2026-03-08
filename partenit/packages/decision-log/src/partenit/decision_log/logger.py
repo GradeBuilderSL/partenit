@@ -8,7 +8,6 @@ There is no code path that skips logging (acceptance criteria).
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from typing import Any
 
 from partenit.core.models import DecisionFingerprint, DecisionPacket, GuardDecision

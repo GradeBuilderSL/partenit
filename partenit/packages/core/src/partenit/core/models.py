@@ -11,13 +11,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, model_validator
-
 
 # ---------------------------------------------------------------------------
 # Observation
@@ -60,7 +59,7 @@ class StructuredObservation(BaseModel):
         default=False,
         description="True when 'human' appears in class_set (conservative safety measure)",
     )
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     frame_hash: str | None = Field(
         default=None,
         description="SHA256 of the raw sensor frame for auditability",
@@ -71,7 +70,7 @@ class StructuredObservation(BaseModel):
     )
 
     @model_validator(mode="after")
-    def set_treat_as_human(self) -> "StructuredObservation":
+    def set_treat_as_human(self) -> StructuredObservation:
         if "human" in self.class_set:
             object.__setattr__(self, "treat_as_human", True)
         return self
@@ -87,7 +86,7 @@ class StructuredObservation(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class PolicyPriority(str, Enum):
+class PolicyPriority(StrEnum):
     """Safety rule priority levels (highest first)."""
 
     SAFETY_CRITICAL = "safety_critical"
@@ -127,7 +126,7 @@ class PolicyCondition(BaseModel):
     logic: str | None = Field(
         default=None, description="'and' | 'or' for compound conditions"
     )
-    conditions: list["PolicyCondition"] = Field(
+    conditions: list[PolicyCondition] = Field(
         default_factory=list,
         description="Sub-conditions for compound type",
     )
@@ -191,11 +190,11 @@ class PolicyBundle(BaseModel):
     bundle_id: str = Field(default_factory=lambda: str(uuid4()))
     version: str = Field(default="0.1.0")
     rules: list[PolicyRule]
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     bundle_hash: str = Field(default="")
 
     @model_validator(mode="after")
-    def compute_hash(self) -> "PolicyBundle":
+    def compute_hash(self) -> PolicyBundle:
         if not self.bundle_hash:
             content = json.dumps(
                 [r.model_dump(mode="json") for r in self.rules],
@@ -226,7 +225,7 @@ class RiskScore(BaseModel):
         description="Feature → contribution breakdown",
     )
     plan_id: str | None = None
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # ---------------------------------------------------------------------------
@@ -257,7 +256,7 @@ class GuardDecision(BaseModel):
         default=None,
         description="Guard-proposed alternative action params",
     )
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     latency_ms: float = Field(default=0.0)
 
 
@@ -266,7 +265,7 @@ class GuardDecision(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class TrustMode(str, Enum):
+class TrustMode(StrEnum):
     """Sensor trust quality modes."""
 
     NOMINAL = "nominal"         # trust > 0.8
@@ -275,7 +274,7 @@ class TrustMode(str, Enum):
     FAILED = "failed"           # < 0.2
 
     @classmethod
-    def from_value(cls, trust: float) -> "TrustMode":
+    def from_value(cls, trust: float) -> TrustMode:
         if trust > 0.8:
             return cls.NOMINAL
         if trust > 0.5:
@@ -296,10 +295,10 @@ class TrustState(BaseModel):
     trust_value: float = Field(ge=0.0, le=1.0)
     mode: TrustMode = TrustMode.NOMINAL
     degradation_reasons: list[str] = Field(default_factory=list)
-    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @model_validator(mode="after")
-    def set_mode(self) -> "TrustState":
+    def set_mode(self) -> TrustState:
         object.__setattr__(self, "mode", TrustMode.from_value(self.trust_value))
         return self
 
@@ -309,7 +308,7 @@ class TrustState(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class SafetyEventType(str, Enum):
+class SafetyEventType(StrEnum):
     STOP = "stop"
     SLOWDOWN = "slowdown"
     VIOLATION = "violation"
@@ -331,7 +330,7 @@ class SafetyEvent(BaseModel):
     event_type: SafetyEventType
     triggered_by: str = Field(description="rule_id or sensor_id that caused this event")
     severity: float = Field(ge=0.0, le=1.0, default=0.5)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     context: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -350,7 +349,7 @@ class DecisionPacket(BaseModel):
     """
 
     packet_id: str = Field(default_factory=lambda: str(uuid4()))
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Decision content
     mission_goal: str = Field(default="")
@@ -401,7 +400,7 @@ class DecisionFingerprint(BaseModel):
 
     fingerprint: str
     packet_id: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     def verify(self, packet: DecisionPacket) -> bool:
         """Return True if the packet's computed fingerprint matches this record."""

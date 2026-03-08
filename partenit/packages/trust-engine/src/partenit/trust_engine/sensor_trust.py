@@ -17,9 +17,8 @@ Degradation triggers (each reduces decay_factor):
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 
 import numpy as np
 
@@ -76,7 +75,7 @@ class SensorTrustModel:
         self.decay_rate = decay_rate
         self.recovery_rate = recovery_rate
         self._degradation_reasons: list[str] = []
-        self._last_updated: datetime = datetime.now(timezone.utc)
+        self._last_updated: datetime = datetime.now(UTC)
 
     @property
     def trust_value(self) -> float:
@@ -132,7 +131,7 @@ class SensorTrustModel:
 
         self._trust = float(np.clip(new_trust, 0.0, 1.0))
         self._degradation_reasons = reasons
-        self._last_updated = datetime.now(timezone.utc)
+        self._last_updated = datetime.now(UTC)
 
         return self.get_state()
 
@@ -149,4 +148,4 @@ class SensorTrustModel:
         """Reset trust to a given value (e.g. after sensor replacement)."""
         self._trust = float(np.clip(trust, 0.0, 1.0))
         self._degradation_reasons = []
-        self._last_updated = datetime.now(timezone.utc)
+        self._last_updated = datetime.now(UTC)

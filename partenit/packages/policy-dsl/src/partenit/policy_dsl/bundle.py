@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Union
 
 from partenit.core.models import PolicyBundle, PolicyRule
 from partenit.policy_dsl.parser import PolicyParser
@@ -31,7 +30,7 @@ class PolicyBundleBuilder:
 
     def from_dir(
         self,
-        directory: Union[str, Path],
+        directory: str | Path,
         version: str = "0.1.0",
         validate: bool = True,
     ) -> PolicyBundle:
@@ -43,7 +42,7 @@ class PolicyBundleBuilder:
 
     def from_file(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         version: str = "0.1.0",
         validate: bool = True,
     ) -> PolicyBundle:
@@ -61,7 +60,7 @@ class PolicyBundleBuilder:
         """Build a bundle from already-parsed rules."""
         return self._build(rules, version)
 
-    def export(self, bundle: PolicyBundle, path: Union[str, Path]) -> None:
+    def export(self, bundle: PolicyBundle, path: str | Path) -> None:
         """Write bundle to a JSON file."""
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -69,7 +68,7 @@ class PolicyBundleBuilder:
         path.write_text(json.dumps(data, indent=2, default=str) + "\n", encoding="utf-8")
 
     @classmethod
-    def load(cls, path: Union[str, Path]) -> PolicyBundle:
+    def load(cls, path: str | Path) -> PolicyBundle:
         """Load a bundle from a previously exported JSON file."""
         path = Path(path)
         data = json.loads(path.read_text(encoding="utf-8"))

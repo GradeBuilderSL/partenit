@@ -10,7 +10,6 @@ Advanced conformal prediction with guaranteed coverage is enterprise-only.
 
 from __future__ import annotations
 
-
 _DEFAULT_THRESHOLD = 0.05  # Include classes with score >= threshold
 
 

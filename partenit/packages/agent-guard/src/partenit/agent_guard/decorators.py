@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from partenit.agent_guard.core import AgentGuard
 

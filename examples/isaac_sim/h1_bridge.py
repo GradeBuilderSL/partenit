@@ -30,29 +30,29 @@ Then in a separate terminal:
     python examples/test_h1_isaac.py
 """
 
-import os
-import sys
-import threading
 import json
-import numpy as np
+import os
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+import numpy as np
 from isaacsim import SimulationApp
 
 simulation_app = SimulationApp({"headless": False, "width": 1600, "height": 900})
 
 from env_loader import load_project_env
+
 load_project_env(script_dir=os.path.dirname(os.path.abspath(__file__)))
 
-from pxr import Usd, UsdGeom, Gf, UsdPhysics, PhysxSchema
+import carb
+import omni
+import omni.appwindow
 from isaacsim.core.api import World
 from isaacsim.core.utils.prims import define_prim
-from isaacsim.robot.policy.examples.robots import H1FlatTerrainPolicy
 from isaacsim.core.utils.stage import add_reference_to_stage
-import omni
-import carb
-import omni.appwindow
+from isaacsim.robot.policy.examples.robots import H1FlatTerrainPolicy
+from pxr import Gf, PhysxSchema, UsdGeom, UsdPhysics
 from sim_frontend import PartenitDemoGUI, SimGUICallbacks
 
 # World coordinates of the human mannequin (set in scene below)
@@ -272,7 +272,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
         elif self.path == "/partenit/observations":
             with state.cmd_lock:
                 rpos = state.robot_status.get("position", {"x": 0.0, "y": 0.0, "z": 0.0})
-                rvel = state.robot_status.get("velocity", {"vx": 0.0, "vy": 0.0, "vz": 0.0})
+                state.robot_status.get("velocity", {"vx": 0.0, "vy": 0.0, "vz": 0.0})
 
             rx = float(rpos.get("x", 0.0))
             ry = float(rpos.get("y", 0.0))
@@ -521,7 +521,7 @@ def main():
             _rb.CreateRigidBodyEnabledAttr().Set(False)
             PhysxSchema.PhysxRigidBodyAPI.Apply(_prim)
 
-    from sim_camera import create_h1_camera_prim, CameraWrapper
+    from sim_camera import CameraWrapper, create_h1_camera_prim
 
     sim_state = {
         "first_step": True,

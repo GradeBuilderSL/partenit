@@ -19,8 +19,10 @@ try:
 except ImportError:
     _RCLPY_AVAILABLE = False
 
-from partenit.core.models import GuardDecision, StructuredObservation
+from datetime import UTC
+
 from partenit.adapters.base import RobotAdapter
+from partenit.core.models import GuardDecision, StructuredObservation
 
 
 class ROS2Adapter(RobotAdapter):
@@ -65,11 +67,11 @@ class ROS2Adapter(RobotAdapter):
         return True
 
     def get_health(self) -> dict:
-        from datetime import datetime, timezone
+        from datetime import datetime
         return {
             "status": "ok" if self._node else "not_initialized",
             "robot_id": self.node_name,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def is_simulation(self) -> bool:

@@ -7,7 +7,7 @@ Checks schema correctness, required fields, type safety, and uniqueness.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import yaml
 
@@ -43,7 +43,7 @@ class PolicyValidator:
     Returns list of warning strings for non-fatal issues.
     """
 
-    def validate_file(self, path: Union[str, Path]) -> list[str]:
+    def validate_file(self, path: str | Path) -> list[str]:
         """Validate a YAML file. Returns warnings list. Raises ValidationError on errors."""
         path = Path(path)
         if not path.exists():
@@ -55,7 +55,7 @@ class PolicyValidator:
             raise ValidationError([f"YAML parse error in {path}: {e}"]) from e
         return self.validate_raw(raw, source=str(path))
 
-    def validate_dir(self, directory: Union[str, Path]) -> list[str]:
+    def validate_dir(self, directory: str | Path) -> list[str]:
         """Validate all YAML files in directory. Returns all warnings."""
         directory = Path(directory)
         if not directory.is_dir():

@@ -3,13 +3,14 @@
 # All settings from .env: CAMERA_PRIM, CAMERA_PITCH, CAMERA_FOCAL_LENGTH, etc.
 
 import os
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
+
 import numpy as np
 import omni
-from pxr import Gf, Sdf, UsdGeom
 from isaacsim.core.utils.rotations import euler_angles_to_quat
 from isaacsim.sensors.camera import Camera
+from pxr import Gf, Sdf, UsdGeom
 
 _CAMERA_ENV_LOADED = False
 
@@ -245,6 +246,7 @@ class CameraWrapper:
             return None
         try:
             import io
+
             from PIL import Image
             if image.dtype != np.uint8:
                 image = (image * 255).astype(np.uint8) if image.max() <= 1 else image.astype(np.uint8)
@@ -282,7 +284,7 @@ def create_h1_camera_prim(stage, config: CameraConfig = None) -> str:
                 UsdGeom.Camera(cam_prim).GetFocusDistanceAttr().Set(config.focus_distance)
             except Exception:
                 pass
-        
+
         # aperture fix
         w, h = config.width, config.height
         aspect = w / h if h else 1.778
@@ -345,7 +347,7 @@ def create_h1_camera_prim(stage, config: CameraConfig = None) -> str:
             UsdGeom.Camera(cam_prim).GetFocusDistanceAttr().Set(config.focus_distance)
         except Exception:
             pass
-            
+
     # aperture fix
     w, h = config.width, config.height
     aspect = w / h if h else 1.778

@@ -14,11 +14,11 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 
-from partenit.core.models import GuardDecision, StructuredObservation
 from partenit.adapters.base import RobotAdapter
+from partenit.core.models import GuardDecision, StructuredObservation
 
 try:
     import httpx
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-class CircuitState(str, Enum):
+class CircuitState(StrEnum):
     CLOSED = "closed"       # Normal — all calls pass through
     OPEN = "open"           # Too many failures — calls rejected immediately
     HALF_OPEN = "half_open" # Cooldown elapsed — one probe call allowed
@@ -214,7 +214,7 @@ class HTTPRobotAdapter(RobotAdapter):
             return {
                 "status": "unreachable",
                 "robot_id": "unknown",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def is_simulation(self) -> bool:
@@ -229,7 +229,7 @@ class HTTPRobotAdapter(RobotAdapter):
         """Close the HTTP client connection pool."""
         self._client.close()
 
-    def __enter__(self) -> "HTTPRobotAdapter":
+    def __enter__(self) -> HTTPRobotAdapter:
         return self
 
     def __exit__(self, *_: object) -> None:

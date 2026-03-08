@@ -12,11 +12,10 @@ in enterprise or project-specific layers.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from partenit.adapters.ros2 import ROS2Adapter
-from partenit.core.models import GuardDecision, StructuredObservation
 
 
 class UnitreeAdapter(ROS2Adapter):
@@ -37,7 +36,7 @@ class UnitreeAdapter(ROS2Adapter):
 
     def get_health(self) -> dict[str, Any]:
         base = super().get_health()
-        base.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+        base.setdefault("timestamp", datetime.now(UTC).isoformat())
         base.setdefault("vendor", "unitree")
         return base
 

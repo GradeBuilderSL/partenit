@@ -13,7 +13,7 @@ Usage:
     Path("report.html").write_text(html)
 """
 
-from partenit.safety_bench.benchmarks.runner import BenchmarkRunner
 from partenit.safety_bench.benchmarks.report_html import generate_html_report
+from partenit.safety_bench.benchmarks.runner import BenchmarkRunner
 
 __all__ = ["BenchmarkRunner", "generate_html_report"]

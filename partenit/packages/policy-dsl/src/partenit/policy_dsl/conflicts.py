@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from partenit.core.models import PolicyPriority, PolicyRule
+from partenit.core.models import PolicyRule
 
 
 @dataclass

@@ -12,23 +12,21 @@ that skips logging.
 
 from __future__ import annotations
 
-import time
 import logging
+import time
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
+from partenit.agent_guard.risk import compute_risk
 from partenit.core.models import (
     GuardDecision,
     PolicyBundle,
-    RiskScore,
     SafetyEvent,
     SafetyEventType,
     StructuredObservation,
 )
 from partenit.policy_dsl.bundle import PolicyBundleBuilder
 from partenit.policy_dsl.evaluator import PolicyEvaluator
-from partenit.policy_dsl.parser import PolicyParser
-from partenit.agent_guard.risk import compute_risk
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +71,7 @@ class AgentGuard:
     # Policy loading
     # ------------------------------------------------------------------
 
-    def load_policies(self, path: Union[str, Path]) -> int:
+    def load_policies(self, path: str | Path) -> int:
         """
         Load policies from a YAML file, directory, or bundled JSON.
 

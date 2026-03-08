@@ -13,7 +13,7 @@ Produces a standalone HTML file with:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from partenit.safety_bench.eval.metrics import EvalMetrics
 from partenit.safety_bench.eval.runner import EvalReport
@@ -83,11 +83,11 @@ def _svg_timeseries(
     threshold_y: float | None = None,
 ) -> str:
     """Render a compact SVG line chart for a (time, value) series."""
-    W, H, P = _W, _H, _PAD
+    w, h, p = _W, _H, _PAD
     if not data:
         return (
-            f'<svg width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">'
-            f'<rect width="{W}" height="{H}" fill="#1a1f2e" rx="4"/>'
+            f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
+            f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="4"/>'
             f'<text x="16" y="40" fill="#475569" font-size="11">No data</text></svg>'
         )
 
@@ -100,10 +100,10 @@ def _svg_timeseries(
         y_max = 1.0
 
     def tx(t: float) -> float:
-        return P + (t / t_max) * (W - 2 * P)
+        return p + (t / t_max) * (w - 2 * p)
 
     def ty(v: float) -> float:
-        return H - P - (min(v, y_max) / y_max) * (H - 2 * P)
+        return h - p - (min(v, y_max) / y_max) * (h - 2 * p)
 
     clip_pts = (
         f"{tx(times[0]):.1f},{ty(0):.1f} "
@@ -118,9 +118,9 @@ def _svg_timeseries(
         val = frac * y_max
         y = ty(val)
         grid += (
-            f'<line x1="{P}" y1="{y:.1f}" x2="{W - P}" y2="{y:.1f}" '
+            f'<line x1="{p}" y1="{y:.1f}" x2="{w - p}" y2="{y:.1f}" '
             f'stroke="#1e2d40" stroke-width="1"/>'
-            f'<text x="{P - 3}" y="{y + 3:.1f}" fill="#334155" font-size="8" '
+            f'<text x="{p - 3}" y="{y + 3:.1f}" fill="#334155" font-size="8" '
             f'text-anchor="end">{val:.1f}</text>'
         )
 
@@ -130,9 +130,9 @@ def _svg_timeseries(
         t_val = t_max * i / 4
         x = tx(t_val)
         xticks += (
-            f'<line x1="{x:.1f}" y1="{H - P}" x2="{x:.1f}" y2="{H - P + 3}" '
+            f'<line x1="{x:.1f}" y1="{h - p}" x2="{x:.1f}" y2="{h - p + 3}" '
             f'stroke="#334155" stroke-width="1"/>'
-            f'<text x="{x:.1f}" y="{H - P + 11}" fill="#334155" font-size="8" '
+            f'<text x="{x:.1f}" y="{h - p + 11}" fill="#334155" font-size="8" '
             f'text-anchor="middle">{t_val:.0f}s</text>'
         )
 
@@ -141,7 +141,7 @@ def _svg_timeseries(
     if threshold_y is not None and 0 < threshold_y <= y_max:
         ty_thresh = ty(threshold_y)
         thresh_line = (
-            f'<line x1="{P}" y1="{ty_thresh:.1f}" x2="{W - P}" y2="{ty_thresh:.1f}" '
+            f'<line x1="{p}" y1="{ty_thresh:.1f}" x2="{w - p}" y2="{ty_thresh:.1f}" '
             f'stroke="#ef4444" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>'
         )
 
@@ -153,22 +153,22 @@ def _svg_timeseries(
             ec = "#ef4444" if evt.get("type") == "stop" else "#f59e0b"
             ex = tx(et)
             evt_marks += (
-                f'<line x1="{ex:.1f}" y1="{P}" x2="{ex:.1f}" y2="{H - P}" '
+                f'<line x1="{ex:.1f}" y1="{p}" x2="{ex:.1f}" y2="{h - p}" '
                 f'stroke="{ec}" stroke-width="1" stroke-dasharray="3 2" opacity="0.6"/>'
             )
 
     return (
-        f'<svg width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">'
-        f'<rect width="{W}" height="{H}" fill="#1a1f2e" rx="4"/>'
+        f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
+        f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="4"/>'
         f'{grid}'
-        f'<line x1="{P}" y1="{P // 2}" x2="{P}" y2="{H - P}" stroke="#2d3f55" stroke-width="1"/>'
-        f'<line x1="{P}" y1="{H - P}" x2="{W - P}" y2="{H - P}" stroke="#2d3f55" stroke-width="1"/>'
+        f'<line x1="{p}" y1="{p // 2}" x2="{p}" y2="{h - p}" stroke="#2d3f55" stroke-width="1"/>'
+        f'<line x1="{p}" y1="{h - p}" x2="{w - p}" y2="{h - p}" stroke="#2d3f55" stroke-width="1"/>'
         f'{xticks}'
         f'{thresh_line}'
         f'{evt_marks}'
         f'<polygon points="{clip_pts}" fill="{color}" opacity="0.12"/>'
         f'<polyline points="{line_pts}" fill="none" stroke="{color}" stroke-width="1.5"/>'
-        f'<text x="{W // 2}" y="13" fill="#64748b" font-size="9" '
+        f'<text x="{w // 2}" y="13" fill="#64748b" font-size="9" '
         f'text-anchor="middle" font-style="italic">{title}</text>'
         f'</svg>'
     )
@@ -182,7 +182,7 @@ def _svg_2d_replay(
     title: str = "Trajectory",
 ) -> str:
     """Render a compact top-down 2D SVG replay."""
-    W, H, P = _W, 220, 30
+    w, h, pad = _W, 220, 30
     human_palette = ["#f87171", "#fb923c", "#facc15", "#a78bfa"]
 
     all_x = [p[0] for p in robot_trajectory] + [robot_goal[0]]
@@ -193,8 +193,8 @@ def _svg_2d_replay(
 
     if not all_x:
         return (
-            f'<svg width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">'
-            f'<rect width="{W}" height="{H}" fill="#1a1f2e" rx="4"/>'
+            f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
+            f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="4"/>'
             f'<text x="16" y="40" fill="#475569" font-size="11">No trajectory data</text>'
             f'</svg>'
         )
@@ -205,11 +205,11 @@ def _svg_2d_replay(
     x_range = max(x_max - x_min, 0.1)
     y_range = max(y_max - y_min, 0.1)
 
-    vp_w = W - 2 * P
-    vp_h = H - 2 * P
+    vp_w = w - 2 * pad
+    vp_h = h - 2 * pad
     scale = min(vp_w / x_range, vp_h / y_range)
-    x_off = P + (vp_w - x_range * scale) / 2
-    y_off = P + (vp_h - y_range * scale) / 2
+    x_off = pad + (vp_w - x_range * scale) / 2
+    y_off = pad + (vp_h - y_range * scale) / 2
 
     def tx(x: float) -> float:
         return x_off + (x - x_min) * scale
@@ -270,21 +270,21 @@ def _svg_2d_replay(
     gx, gy = tx(robot_goal[0]), ty(robot_goal[1])
 
     legend = (
-        f'<circle cx="30" cy="{H - 12}" r="4" fill="#3b82f6"/>'
-        f'<text x="38" y="{H - 8}" fill="#60a5fa" font-size="8">Robot</text>'
-        f'<circle cx="82" cy="{H - 12}" r="5" fill="none" stroke="#22c55e" stroke-width="1.5"/>'
-        f'<text x="91" y="{H - 8}" fill="#22c55e" font-size="8">Goal</text>'
-        f'<circle cx="130" cy="{H - 12}" r="4" fill="#f87171"/>'
-        f'<text x="138" y="{H - 8}" fill="#f87171" font-size="8">Human</text>'
-        f'<circle cx="188" cy="{H - 12}" r="3" fill="#f59e0b"/>'
-        f'<text x="195" y="{H - 8}" fill="#f59e0b" font-size="8">Slow</text>'
-        f'<circle cx="227" cy="{H - 12}" r="5" fill="none" stroke="#ef4444" stroke-width="1.5"/>'
-        f'<text x="236" y="{H - 8}" fill="#ef4444" font-size="8">Stop</text>'
+        f'<circle cx="30" cy="{h - 12}" r="4" fill="#3b82f6"/>'
+        f'<text x="38" y="{h - 8}" fill="#60a5fa" font-size="8">Robot</text>'
+        f'<circle cx="82" cy="{h - 12}" r="5" fill="none" stroke="#22c55e" stroke-width="1.5"/>'
+        f'<text x="91" y="{h - 8}" fill="#22c55e" font-size="8">Goal</text>'
+        f'<circle cx="130" cy="{h - 12}" r="4" fill="#f87171"/>'
+        f'<text x="138" y="{h - 8}" fill="#f87171" font-size="8">Human</text>'
+        f'<circle cx="188" cy="{h - 12}" r="3" fill="#f59e0b"/>'
+        f'<text x="195" y="{h - 8}" fill="#f59e0b" font-size="8">Slow</text>'
+        f'<circle cx="227" cy="{h - 12}" r="5" fill="none" stroke="#ef4444" stroke-width="1.5"/>'
+        f'<text x="236" y="{h - 8}" fill="#ef4444" font-size="8">Stop</text>'
     )
 
     return (
-        f'<svg width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">'
-        f'<rect width="{W}" height="{H}" fill="#1a1f2e" rx="4"/>'
+        f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
+        f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="4"/>'
         f'<polyline points="{robot_pts}" fill="none" stroke="#3b82f6" stroke-width="2"/>'
         f'{human_svgs}'
         f'{stop_marks}'
@@ -293,7 +293,7 @@ def _svg_2d_replay(
         f'<circle cx="{gx:.1f}" cy="{gy:.1f}" r="9" fill="none" '
         f'stroke="#22c55e" stroke-width="2" stroke-dasharray="5 3"/>'
         f'<text x="{gx + 12:.1f}" y="{gy + 3:.1f}" fill="#22c55e" font-size="9">GOAL</text>'
-        f'<text x="{W // 2}" y="15" fill="#64748b" font-size="9" '
+        f'<text x="{w // 2}" y="15" fill="#64748b" font-size="9" '
         f'text-anchor="middle" font-style="italic">{title}</text>'
         f'{legend}'
         f'</svg>'
@@ -551,7 +551,7 @@ def generate_eval_html(report: EvalReport, title: str = "Partenit Eval Report") 
     Returns:
         HTML string.
     """
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     scenario_sections = ""
     for scenario_id in report.scenarios:

@@ -15,7 +15,6 @@ from typing import Any
 
 from partenit.core.models import RiskScore, StructuredObservation
 
-
 _SPEED_PARAM_KEYS = ("speed", "max_velocity", "velocity", "max_speed")
 
 

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -48,13 +48,13 @@ def _cmd_report(args: argparse.Namespace) -> int:
     time_to = None
     if args.from_date:
         try:
-            time_from = datetime.strptime(args.from_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            time_from = datetime.strptime(args.from_date, "%Y-%m-%d").replace(tzinfo=UTC)
         except ValueError:
             print(f"ERROR: invalid --from date '{args.from_date}' (expected YYYY-MM-DD)", file=sys.stderr)
             return 1
     if args.to_date:
         try:
-            time_to = datetime.strptime(args.to_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            time_to = datetime.strptime(args.to_date, "%Y-%m-%d").replace(tzinfo=UTC)
         except ValueError:
             print(f"ERROR: invalid --to date '{args.to_date}' (expected YYYY-MM-DD)", file=sys.stderr)
             return 1
@@ -71,8 +71,9 @@ def _cmd_report(args: argparse.Namespace) -> int:
 
 
 def _cmd_inspect(args: argparse.Namespace) -> int:
-    from partenit.decision_log.archive import DecisionArchive
     import json
+
+    from partenit.decision_log.archive import DecisionArchive
 
     archive = DecisionArchive(args.storage_dir)
     packet = archive.get(args.packet_id)
@@ -92,9 +93,10 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 
 def _cmd_replay(args: argparse.Namespace) -> int:
     """Replay decisions from a file or directory in rich terminal or HTML format."""
-    from partenit.decision_log.storage import LocalFileStorage, InMemoryStorage
-    from partenit.decision_log.archive import DecisionArchive
     import json
+
+    from partenit.decision_log.archive import DecisionArchive
+    from partenit.decision_log.storage import InMemoryStorage
 
     path = Path(args.path)
     packets = []
@@ -102,7 +104,7 @@ def _cmd_replay(args: argparse.Namespace) -> int:
     if path.is_file() and path.suffix in (".json", ".jsonl"):
         # Single file — load packets from it
         if path.suffix == ".jsonl":
-            storage = InMemoryStorage()
+            InMemoryStorage()
             with open(path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
@@ -142,9 +144,7 @@ def _cmd_replay(args: argparse.Namespace) -> int:
 def _print_replay_terminal(packets: list, source: str) -> None:
     """Print decision replay in terminal using rich (if available) or plain text."""
     try:
-        from rich.console import Console
-        from rich.table import Table
-        from rich.text import Text
+        import rich  # noqa: F401
         _rich_replay(packets, source)
     except ImportError:
         _plain_replay(packets, source)
@@ -322,6 +322,7 @@ def _cmd_record_show(args: argparse.Namespace) -> int:
 def _cmd_record_export(args: argparse.Namespace) -> int:
     """Export a session to a single JSON file."""
     import json
+
     from partenit.decision_log.archive import DecisionArchive
 
     session_dir = Path(args.dir) / args.session_name
