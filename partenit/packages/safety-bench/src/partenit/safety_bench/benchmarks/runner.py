@@ -72,9 +72,7 @@ class BenchmarkRunner:
             Flat list of ScenarioResult objects.
         """
         directory = Path(directory)
-        files = sorted(
-            list(directory.glob("**/*.yaml")) + list(directory.glob("**/*.yml"))
-        )
+        files = sorted(list(directory.glob("**/*.yaml")) + list(directory.glob("**/*.yml")))
         results: list[ScenarioResult] = []
         for path in files:
             try:
@@ -84,5 +82,6 @@ class BenchmarkRunner:
                     results.append(self.run(path, seed=seed, with_guard=True))
             except Exception as exc:
                 import warnings
+
                 warnings.warn(f"Skipped {path.name}: {exc}")
         return results

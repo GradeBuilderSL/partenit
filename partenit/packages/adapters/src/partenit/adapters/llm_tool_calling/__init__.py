@@ -36,10 +36,10 @@ class GuardedToolCall:
 
     tool_name: str
     allowed: bool
-    safe_input: dict[str, Any]          # original or modified input
+    safe_input: dict[str, Any]  # original or modified input
     original_input: dict[str, Any]
     decision: GuardDecision
-    rejection_message: str = ""         # human-readable, suitable for LLM context
+    rejection_message: str = ""  # human-readable, suitable for LLM context
 
     @property
     def modified(self) -> bool:

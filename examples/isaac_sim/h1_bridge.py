@@ -161,7 +161,6 @@ load();
 
 
 class BridgeHandler(BaseHTTPRequestHandler):
-
     # ------------------------------------------------------------------
     # POST handlers
     # ------------------------------------------------------------------
@@ -211,10 +210,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     risk_val = risk.get("value", "?") if isinstance(risk, dict) else "?"
                     print(f"[Partenit] BLOCKED  risk={risk_val}  reason={reason}")
                 else:
-                    speed = float(
-                        modified.get("speed",
-                        modified.get("max_velocity", 0.5))
-                    )
+                    speed = float(modified.get("speed", modified.get("max_velocity", 0.5)))
                     with state.cmd_lock:
                         state.cmd_vel[0] = min(speed, 0.75)  # cap vx at 0.75 m/s
                         state.cmd_vel[1] = 0.0
@@ -222,8 +218,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     policies = decision.get("applied_policies", [])
                     risk = decision.get("risk_score", {})
                     risk_val = risk.get("value", "?") if isinstance(risk, dict) else "?"
-                    print(f"[Partenit] ALLOWED  speed={speed:.2f}  risk={risk_val}  "
-                          f"policies={policies}")
+                    print(
+                        f"[Partenit] ALLOWED  speed={speed:.2f}  risk={risk_val}  "
+                        f"policies={policies}"
+                    )
 
                 self._send_json({"status": "ok"})
             except Exception as e:
@@ -260,13 +258,15 @@ class BridgeHandler(BaseHTTPRequestHandler):
 
         # --- Partenit: health check ---
         elif self.path == "/partenit/health":
-            self._send_json({
-                "status": "ok",
-                "robot_id": "h1_isaac_sim",
-                "timestamp": time.time(),
-                "is_simulation": True,
-                "ready": state.physics_ready,  # False until physics loop is running
-            })
+            self._send_json(
+                {
+                    "status": "ok",
+                    "robot_id": "h1_isaac_sim",
+                    "timestamp": time.time(),
+                    "is_simulation": True,
+                    "ready": state.physics_ready,  # False until physics loop is running
+                }
+            )
 
         # --- Partenit: observations (human position in robot-centric frame) ---
         elif self.path == "/partenit/observations":
@@ -281,16 +281,20 @@ class BridgeHandler(BaseHTTPRequestHandler):
             dx = _HUMAN_WORLD_POS[0] - rx
             dy = _HUMAN_WORLD_POS[1] - ry
 
-            self._send_json([{
-                "object_id": "human_0",
-                "class_best": "human",
-                "class_set": ["human"],          # triggers treat_as_human=True
-                "position_3d": [dx, dy, 0.0],    # meters, robot-centric
-                "velocity": [0.0, 0.0, 0.0],     # mannequin is static
-                "confidence": 0.95,
-                "sensor_trust": 0.9,
-                "source_id": "isaac_sim_perception",
-            }])
+            self._send_json(
+                [
+                    {
+                        "object_id": "human_0",
+                        "class_best": "human",
+                        "class_set": ["human"],  # triggers treat_as_human=True
+                        "position_3d": [dx, dy, 0.0],  # meters, robot-centric
+                        "velocity": [0.0, 0.0, 0.0],  # mannequin is static
+                        "confidence": 0.95,
+                        "sensor_trust": 0.9,
+                        "source_id": "isaac_sim_perception",
+                    }
+                ]
+            )
 
         elif self.path in ("/", "/status"):
             self._send_html(_STATUS_PAGE_HTML)
@@ -337,6 +341,7 @@ def run_server():
 # ------------------------------------------------------------------
 # GUI callbacks (unchanged from h1_bridge.py)
 # ------------------------------------------------------------------
+
 
 class BridgeCallbacks(SimGUICallbacks):
     def __init__(self):
@@ -411,6 +416,7 @@ class BridgeCallbacks(SimGUICallbacks):
 # Main
 # ------------------------------------------------------------------
 
+
 def main():
     state.incoming_chat = []
 
@@ -418,10 +424,12 @@ def main():
 
     try:
         from isaacsim.storage.native import get_assets_root_path
+
         assets_root_path = get_assets_root_path()
     except Exception:
         try:
             from omni.isaac.core.utils.nucleus import get_assets_root_path
+
             assets_root_path = get_assets_root_path()
         except Exception:
             assets_root_path = None
@@ -437,8 +445,7 @@ def main():
         define_prim("/World/Light", "DistantLight")
         print("[Bridge] Using default ground plane")
 
-    usd_path = (assets_root_path + "/Isaac/Robots/Unitree/H1/h1.usd"
-                if assets_root_path else None)
+    usd_path = assets_root_path + "/Isaac/Robots/Unitree/H1/h1.usd" if assets_root_path else None
     h1_policy = H1FlatTerrainPolicy(
         prim_path="/World/H1_0",
         name="H1_0",
@@ -458,13 +465,18 @@ def main():
         UsdGeom.Gprim(prim).CreateDisplayColorAttr([Gf.Vec3f(*color)])
         return prim
 
-    setup_obj("/World/Sphere",      "Sphere", (2.5, 0.0, 0.35),  (0.35,)*3, (1.0, 0.9, 0.05))
-    setup_obj("/World/Cube_Green",  "Cube",   (-1.5, -3.0, 0.2), (0.2,)*3,  (0.1, 0.8, 0.1))
-    setup_obj("/World/Cube_Blue",   "Cube",   (2.0, -1.5, 0.28), (0.28,)*3, (0.1, 0.2, 0.9))
-    setup_obj("/World/Cube_Red",    "Cube",   (0.0, -1.5, 0.35), (0.35,)*3, (0.9, 0.1, 0.1))
-    setup_obj("/World/Cube_Yellow", "Cube",   (1.5, 1.5, 0.32),  (0.32,)*3, (1.0, 0.85, 0.1))
-    object_paths = ["/World/Sphere", "/World/Cube_Green", "/World/Cube_Blue",
-                    "/World/Cube_Red", "/World/Cube_Yellow"]
+    setup_obj("/World/Sphere", "Sphere", (2.5, 0.0, 0.35), (0.35,) * 3, (1.0, 0.9, 0.05))
+    setup_obj("/World/Cube_Green", "Cube", (-1.5, -3.0, 0.2), (0.2,) * 3, (0.1, 0.8, 0.1))
+    setup_obj("/World/Cube_Blue", "Cube", (2.0, -1.5, 0.28), (0.28,) * 3, (0.1, 0.2, 0.9))
+    setup_obj("/World/Cube_Red", "Cube", (0.0, -1.5, 0.35), (0.35,) * 3, (0.9, 0.1, 0.1))
+    setup_obj("/World/Cube_Yellow", "Cube", (1.5, 1.5, 0.32), (0.32,) * 3, (1.0, 0.85, 0.1))
+    object_paths = [
+        "/World/Sphere",
+        "/World/Cube_Green",
+        "/World/Cube_Blue",
+        "/World/Cube_Red",
+        "/World/Cube_Yellow",
+    ]
 
     for _path in object_paths:
         _prim = stage.GetPrimAtPath(_path)
@@ -483,13 +495,9 @@ def main():
     try:
         human_prim = add_reference_to_stage(HUMAN_USD, "/World/Human_0")
         try:
-            UsdGeom.Xformable(human_prim).GetTranslateOp().Set(
-                Gf.Vec3d(*_HUMAN_WORLD_POS)
-            )
+            UsdGeom.Xformable(human_prim).GetTranslateOp().Set(Gf.Vec3d(*_HUMAN_WORLD_POS))
         except Exception:
-            UsdGeom.Xformable(human_prim).AddTranslateOp().Set(
-                Gf.Vec3d(*_HUMAN_WORLD_POS)
-            )
+            UsdGeom.Xformable(human_prim).AddTranslateOp().Set(Gf.Vec3d(*_HUMAN_WORLD_POS))
         print(f"[Bridge] Human at world {_HUMAN_WORLD_POS}")
     except Exception as e:
         print(f"[Bridge] Human load failed: {e}")
@@ -501,7 +509,7 @@ def main():
     box_paths = []
     try:
         for prim_name, scale, pos in [
-            ("Box_Red",    0.81, (0.3 - 0.25, -1.3 - 0.25, 0.525 + 0.15 + 0.07 + 0.81 * 0.15)),
+            ("Box_Red", 0.81, (0.3 - 0.25, -1.3 - 0.25, 0.525 + 0.15 + 0.07 + 0.81 * 0.15)),
             ("Box_Yellow", 0.77, (1.9, 1.9, 0.48 + 0.15 + 0.07 + 0.77 * 0.15)),
         ]:
             bp = add_reference_to_stage(usd_path=BOX_USD, prim_path=f"/World/{prim_name}")
@@ -575,20 +583,22 @@ def main():
                         1.0 - 2.0 * (qy * qy + qz * qz),
                     )
                     with state.cmd_lock:
-                        state.robot_status.update({
-                            "position": {
-                                "x": float(pos[0]),
-                                "y": float(pos[1]),
-                                "z": float(pos[2]),
-                            },
-                            "velocity": {
-                                "vx": float(lin_vel[0]),
-                                "vy": float(lin_vel[1]),
-                                "vz": float(lin_vel[2]),
-                            },
-                            "heading_rad": float(yaw),
-                            "timestamp_s": time.time(),
-                        })
+                        state.robot_status.update(
+                            {
+                                "position": {
+                                    "x": float(pos[0]),
+                                    "y": float(pos[1]),
+                                    "z": float(pos[2]),
+                                },
+                                "velocity": {
+                                    "vx": float(lin_vel[0]),
+                                    "vy": float(lin_vel[1]),
+                                    "vz": float(lin_vel[2]),
+                                },
+                                "heading_rad": float(yaw),
+                                "timestamp_s": time.time(),
+                            }
+                        )
             except Exception:
                 pass
 
@@ -598,9 +608,9 @@ def main():
     print("[Bridge] Physics ready — Partenit API accepting commands")
 
     input_keyboard_mapping = {
-        "UP":    [0.75, 0.0, 0.0],
-        "DOWN":  [-0.5, 0.0, 0.0],
-        "LEFT":  [0.0, 0.0, 0.75],
+        "UP": [0.75, 0.0, 0.0],
+        "DOWN": [-0.5, 0.0, 0.0],
+        "LEFT": [0.0, 0.0, 0.75],
         "RIGHT": [0.0, 0.0, -0.75],
     }
 

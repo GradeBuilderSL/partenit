@@ -39,4 +39,3 @@ class UnitreeAdapter(ROS2Adapter):
         base.setdefault("timestamp", datetime.now(UTC).isoformat())
         base.setdefault("vendor", "unitree")
         return base
-

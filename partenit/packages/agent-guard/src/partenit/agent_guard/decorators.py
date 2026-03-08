@@ -65,9 +65,7 @@ def guard_action(
                 guard.risk_threshold = original_threshold
 
             if not decision.allowed:
-                logger.warning(
-                    "Guard blocked '%s': %s", name, decision.rejection_reason
-                )
+                logger.warning("Guard blocked '%s': %s", name, decision.rejection_reason)
                 return decision
 
             # Pass modified params back to function

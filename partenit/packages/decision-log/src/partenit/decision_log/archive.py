@@ -118,12 +118,14 @@ class DecisionArchive:
             lines.append(f"\n_... {total - 50} more packets not shown_")
 
         if verification.tampered:
-            lines.extend([
-                "",
-                "## Tampered Packets",
-                "",
-                *[f"- `{pid}`" for pid in verification.tampered],
-            ])
+            lines.extend(
+                [
+                    "",
+                    "## Tampered Packets",
+                    "",
+                    *[f"- `{pid}`" for pid in verification.tampered],
+                ]
+            )
 
         return "\n".join(lines) + "\n"
 

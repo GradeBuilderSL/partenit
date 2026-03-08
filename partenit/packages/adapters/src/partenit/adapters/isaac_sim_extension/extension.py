@@ -33,6 +33,7 @@ import time
 try:
     import omni.ext
     import omni.ui as ui
+
     _HAS_OMNI = True
 except ImportError:
     _HAS_OMNI = False
@@ -41,6 +42,7 @@ except ImportError:
 try:
     from partenit.adapters.isaac_sim import IsaacSimAdapter
     from partenit.agent_guard import AgentGuard
+
     _HAS_PARTENIT = True
 except ImportError:
     _HAS_PARTENIT = False
@@ -49,15 +51,16 @@ except ImportError:
 # --------------------------------------------------------------------------- #
 # Constants
 # --------------------------------------------------------------------------- #
-_POLL_INTERVAL_S = 0.5    # How often to poll observations from Isaac Sim
-_DEFAULT_GATEWAY  = "http://localhost:7000"
-_DEFAULT_POLICIES = ""    # Set to path of your policies YAML
+_POLL_INTERVAL_S = 0.5  # How often to poll observations from Isaac Sim
+_DEFAULT_GATEWAY = "http://localhost:7000"
+_DEFAULT_POLICIES = ""  # Set to path of your policies YAML
 
 
 # --------------------------------------------------------------------------- #
 # Extension entry point
 # --------------------------------------------------------------------------- #
 if _HAS_OMNI:
+
     class PartenitSafetyOverlayExtension(omni.ext.IExt):
         """
         Omniverse Extension: Partenit Safety Overlay.
@@ -110,11 +113,11 @@ if _HAS_OMNI:
             with self._window.frame:
                 with ui.VStack(spacing=4):
                     ui.Label("Partenit Safety Guard", style={"font_size": 16})
-                    self._lbl_status   = ui.Label("Status: initializing…")
-                    self._lbl_risk     = ui.Label("Risk:   —")
-                    self._lbl_policy   = ui.Label("Policy: —")
-                    self._lbl_speed    = ui.Label("Speed:  —")
-                    self._lbl_trust    = ui.Label("Trust:  —")
+                    self._lbl_status = ui.Label("Status: initializing…")
+                    self._lbl_risk = ui.Label("Risk:   —")
+                    self._lbl_policy = ui.Label("Policy: —")
+                    self._lbl_speed = ui.Label("Speed:  —")
+                    self._lbl_trust = ui.Label("Trust:  —")
 
         # ------------------------------------------------------------------ #
         # Polling loop
@@ -177,6 +180,7 @@ if _HAS_OMNI:
 # Standalone usage (outside Isaac Sim, for testing)
 # --------------------------------------------------------------------------- #
 
+
 def demo() -> None:
     """
     Run the guard overlay logic standalone (without Isaac Sim UI).
@@ -188,7 +192,9 @@ def demo() -> None:
         python extension.py
     """
     if not _HAS_PARTENIT:
-        print("ERROR: partenit not installed. Run: pip install partenit-core partenit-agent-guard partenit-adapters")
+        print(
+            "ERROR: partenit not installed. Run: pip install partenit-core partenit-agent-guard partenit-adapters"
+        )
         return
 
     print("Partenit Safety Overlay — standalone demo")

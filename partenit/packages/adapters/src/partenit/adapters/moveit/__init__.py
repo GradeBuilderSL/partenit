@@ -20,6 +20,7 @@ Architecture intent:
         ↓
     MoveIt execution pipeline
 """
+
 from __future__ import annotations
 
 from partenit.adapters.base import RobotAdapter
@@ -36,8 +37,7 @@ class MoveItAdapter(RobotAdapter):
     def __init__(self, node_name: str = "partenit_moveit") -> None:
         self._node_name = node_name
         raise NotImplementedError(
-            "MoveItAdapter is not yet implemented. "
-            "Use ROS2Adapter for general ROS2 integration."
+            "MoveItAdapter is not yet implemented. Use ROS2Adapter for general ROS2 integration."
         )
 
     def get_observations(self) -> list[StructuredObservation]:

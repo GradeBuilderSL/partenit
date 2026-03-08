@@ -11,6 +11,7 @@ __all__ = ["RobotAdapter", "MockRobotAdapter"]
 
 try:
     from partenit.adapters.http import CircuitBreaker, HTTPRobotAdapter
+
     __all__ += ["HTTPRobotAdapter", "CircuitBreaker"]
 except ImportError:
     pass  # httpx not installed

@@ -44,7 +44,10 @@ ROBOT_TOOLS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "zone": {"type": "string", "description": "Target zone name, e.g. 'shipping', 'storage'"},
+                "zone": {
+                    "type": "string",
+                    "description": "Target zone name, e.g. 'shipping', 'storage'",
+                },
                 "speed": {"type": "number", "description": "Speed in m/s (0.0 – 3.0)"},
             },
             "required": ["zone", "speed"],
@@ -207,7 +210,9 @@ def run_demo(use_real_llm: bool = False) -> None:
         else:
             print(f"    [Guard] BLOCKED — {decision.rejection_reason}")
             print(f"    [Guard] Risk: {decision.risk_score.value:.2f}")
-            results.append({"action": action, "status": "BLOCKED", "reason": decision.rejection_reason})
+            results.append(
+                {"action": action, "status": "BLOCKED", "reason": decision.rejection_reason}
+            )
 
         print(f"    [Log]  Packet: {packet.packet_id[:16]}…  Verified: {log.verify_packet(packet)}")
 
@@ -223,7 +228,9 @@ def run_demo(use_real_llm: bool = False) -> None:
     all_packets = log.recent(100)
     print(f"  Decisions logged:  {len(all_packets)}")
     print("\n  Every decision has a cryptographic fingerprint.")
-    print(f"  All {len(all_packets)} packets verified: {all(log.verify_packet(p) for p in all_packets)}")
+    print(
+        f"  All {len(all_packets)} packets verified: {all(log.verify_packet(p) for p in all_packets)}"
+    )
     print()
     print("  What this demo shows:")
     print("  - The LLM is free to reason and propose any action.")

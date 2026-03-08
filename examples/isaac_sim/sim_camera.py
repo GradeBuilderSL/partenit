@@ -50,8 +50,8 @@ def _env_int(key: str, default: int) -> int:
 
 # Fallbacks when .env vars missing (used only in from_env)
 _DEFAULT_PITCH = -15.0
-_DEFAULT_PITCH_NEAR = -15.0   # walking / near: floor + cubes in frame (not just floor)
-_DEFAULT_PITCH_FAR = -5.0     # scanning / far: slightly above horizon
+_DEFAULT_PITCH_NEAR = -15.0  # walking / near: floor + cubes in frame (not just floor)
+_DEFAULT_PITCH_FAR = -5.0  # scanning / far: slightly above horizon
 _DEFAULT_PRIM = "torso_link"
 # USD camera: +Y up, -Z forward. Pitch (tilt up/down) = rotate around X. Y = yaw (pan).
 _DEFAULT_PITCH_AXIS = "x"
@@ -64,10 +64,11 @@ _DEFAULT_HEIGHT = 480
 @dataclass
 class CameraConfig:
     """Camera config. from_env() reads .env (CAMERA_*); defaults only when var missing."""
+
     prim_name: str = _DEFAULT_PRIM
     pitch_deg: float = _DEFAULT_PITCH
-    pitch_near: float = _DEFAULT_PITCH_NEAR   # walking / near: look down
-    pitch_far: float = _DEFAULT_PITCH_FAR    # scanning / far: look forward
+    pitch_near: float = _DEFAULT_PITCH_NEAR  # walking / near: look down
+    pitch_far: float = _DEFAULT_PITCH_FAR  # scanning / far: look forward
     width: int = _DEFAULT_WIDTH
     height: int = _DEFAULT_HEIGHT
     focal_length: float = _DEFAULT_FOCAL
@@ -87,17 +88,22 @@ class CameraConfig:
             width=_env_int("CAMERA_WIDTH", _DEFAULT_WIDTH),
             height=_env_int("CAMERA_HEIGHT", _DEFAULT_HEIGHT),
             focal_length=_env_float("CAMERA_FOCAL_LENGTH", _DEFAULT_FOCAL),
-            pitch_axis=(os.getenv("CAMERA_PITCH_AXIS", _DEFAULT_PITCH_AXIS) or _DEFAULT_PITCH_AXIS).lower().strip()[:1],
+            pitch_axis=(os.getenv("CAMERA_PITCH_AXIS", _DEFAULT_PITCH_AXIS) or _DEFAULT_PITCH_AXIS)
+            .lower()
+            .strip()[:1],
             focus_distance=_env_float("CAMERA_FOCUS_DISTANCE", _DEFAULT_FOCUS),
             dual_viewport=os.getenv("DUAL_VIEWPORT", "1") == "1",
         )
         if os.getenv("VLM_DEBUG") or os.getenv("CAMERA_DEBUG"):
-            print(f"[Camera] from .env: prim={cfg.prim_name} pitch={cfg.pitch_deg} focal={cfg.focal_length} focus={cfg.focus_distance}")
+            print(
+                f"[Camera] from .env: prim={cfg.prim_name} pitch={cfg.pitch_deg} focal={cfg.focal_length} focus={cfg.focus_distance}"
+            )
         return cfg
 
 
 class CameraWrapper:
     """Wraps Isaac Sim Camera for capture and VLM. Robot-agnostic via prim_path."""
+
     def __init__(self, prim_path=None, name="head_camera", config: CameraConfig = None):
         self.config = config or CameraConfig.from_env()
         if prim_path is None:
@@ -142,7 +148,7 @@ class CameraWrapper:
             euler = np.array([float(rot_xyz[0]), float(rot_xyz[1]), float(rot_xyz[2])])
             self.camera.set_local_pose(
                 translation=np.array([0.18, 0.0, 0.15]),
-                orientation=euler_angles_to_quat(euler, degrees=True)
+                orientation=euler_angles_to_quat(euler, degrees=True),
             )
 
     def set_pitch(self, deg: float):
@@ -167,7 +173,10 @@ class CameraWrapper:
             elif self.config.prim_name == "torso_link":
                 self.prim_path = "/World/H1_0/torso_link/camera"
             else:
-                for p in ["/World/H1_0/pelvis/pelvis/chest/chest/neck/neck/head/head", "/World/H1_0/head_link"]:
+                for p in [
+                    "/World/H1_0/pelvis/pelvis/chest/chest/neck/neck/head/head",
+                    "/World/H1_0/head_link",
+                ]:
                     if stage.GetPrimAtPath(p).IsValid():
                         self.prim_path = p + "/head_camera"
                         break
@@ -176,7 +185,11 @@ class CameraWrapper:
                     print("[Camera] Head link not found, using torso_link")
             pitch_deg = float(self.config.pitch_deg)
             # X = pitch (tilt up/down). Y = yaw (pan). USD: -Z forward, +Y up.
-            euler = np.array([pitch_deg, 0.0, 0.0]) if self.config.pitch_axis == "x" else np.array([0.0, pitch_deg, 0.0])
+            euler = (
+                np.array([pitch_deg, 0.0, 0.0])
+                if self.config.pitch_axis == "x"
+                else np.array([0.0, pitch_deg, 0.0])
+            )
             self.camera = Camera(
                 prim_path=self.prim_path,
                 name=self.name,
@@ -221,7 +234,9 @@ class CameraWrapper:
                     time.sleep(0.02)
                     continue
                 arr = np.asarray(rgb)
-                arr = (arr * 255).astype(np.uint8) if arr.dtype != np.uint8 else arr.astype(np.uint8)
+                arr = (
+                    (arr * 255).astype(np.uint8) if arr.dtype != np.uint8 else arr.astype(np.uint8)
+                )
                 if arr.ndim == 3 and arr.shape[-1] in (3, 4) and arr.size > 0:
                     if arr.shape[-1] == 4:
                         arr = arr[:, :, :3]
@@ -234,6 +249,7 @@ class CameraWrapper:
         if last_arr is not None and os.getenv("VLM_DEBUG"):
             try:
                 from PIL import Image
+
                 Image.fromarray(last_arr).save("/tmp/vlm_capture_debug.png")
                 print("[VLM] Debug: saved to /tmp/vlm_capture_debug.png")
             except Exception:
@@ -248,8 +264,11 @@ class CameraWrapper:
             import io
 
             from PIL import Image
+
             if image.dtype != np.uint8:
-                image = (image * 255).astype(np.uint8) if image.max() <= 1 else image.astype(np.uint8)
+                image = (
+                    (image * 255).astype(np.uint8) if image.max() <= 1 else image.astype(np.uint8)
+                )
             pil = Image.fromarray(image)
             buf = io.BytesIO()
             pil.save(buf, format="PNG")
@@ -276,7 +295,11 @@ def create_h1_camera_prim(stage, config: CameraConfig = None) -> str:
         xf.ClearXformOpOrder()
         xf.AddTranslateOp().Set(Gf.Vec3d(-0.8, 0.0, 1.25))
         # X = pitch (tilt up/down). Y = yaw. USD: -Z forward, +Y up.
-        rot = (float(config.pitch_deg), 0.0, 0.0) if config.pitch_axis == "x" else (0.0, float(config.pitch_deg), 0.0)
+        rot = (
+            (float(config.pitch_deg), 0.0, 0.0)
+            if config.pitch_axis == "x"
+            else (0.0, float(config.pitch_deg), 0.0)
+        )
         xf.AddRotateXYZOp().Set(Gf.Vec3f(*rot))
         UsdGeom.Camera(cam_prim).GetFocalLengthAttr().Set(config.focal_length)
         if config.focus_distance > 0:
@@ -318,7 +341,11 @@ def create_h1_camera_prim(stage, config: CameraConfig = None) -> str:
             xf = UsdGeom.Xformable(cam_prim)
             xf.ClearXformOpOrder()
             xf.AddTranslateOp().Set(Gf.Vec3d(-0.8, 0.0, 1.25))
-            rot = (float(config.pitch_deg), 0.0, 0.0) if config.pitch_axis == "x" else (0.0, float(config.pitch_deg), 0.0)
+            rot = (
+                (float(config.pitch_deg), 0.0, 0.0)
+                if config.pitch_axis == "x"
+                else (0.0, float(config.pitch_deg), 0.0)
+            )
             xf.AddRotateXYZOp().Set(Gf.Vec3f(*rot))
             UsdGeom.Camera(cam_prim).GetFocalLengthAttr().Set(config.focal_length)
             if config.focus_distance > 0:
@@ -339,7 +366,11 @@ def create_h1_camera_prim(stage, config: CameraConfig = None) -> str:
     else:
         xf.AddTranslateOp().Set(Gf.Vec3d(0.2, 0.0, 0.15))
         # X = pitch (tilt up/down). Y = yaw. USD: -Z forward, +Y up.
-        rot = (float(config.pitch_deg), 0.0, 0.0) if config.pitch_axis == "x" else (0.0, float(config.pitch_deg), 0.0)
+        rot = (
+            (float(config.pitch_deg), 0.0, 0.0)
+            if config.pitch_axis == "x"
+            else (0.0, float(config.pitch_deg), 0.0)
+        )
         xf.AddRotateXYZOp().Set(Gf.Vec3f(*rot))
     UsdGeom.Camera(cam_prim).GetFocalLengthAttr().Set(config.focal_length)
     if config.focus_distance > 0:
@@ -375,6 +406,7 @@ def create_head_camera_viewport(camera_wrapper: CameraWrapper, config: CameraCon
         return False
     try:
         from omni.kit.viewport.utility import create_viewport_window
+
         cam_path = camera_wrapper.prim_path
         stage = omni.usd.get_context().get_stage()
         if not stage.GetPrimAtPath(cam_path).IsValid():
@@ -385,7 +417,7 @@ def create_head_camera_viewport(camera_wrapper: CameraWrapper, config: CameraCon
             height=config.height,
             position_x=1620,
             position_y=400,
-            camera_path=Sdf.Path(cam_path)
+            camera_path=Sdf.Path(cam_path),
         )
         _head_viewport_created = True
         print("[Camera] Head camera viewport created (dual view)")

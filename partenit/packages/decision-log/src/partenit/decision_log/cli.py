@@ -29,7 +29,9 @@ def _cmd_verify(args: argparse.Namespace) -> int:
     packets = archive.query()
     result = archive.verify_chain(packets)
 
-    print(f"Verified {result.total} packets: {result.valid} valid, {result.tampered_count} tampered")
+    print(
+        f"Verified {result.total} packets: {result.valid} valid, {result.tampered_count} tampered"
+    )
     if result.tampered:
         print("\nTampered packets:")
         for pid in result.tampered:
@@ -50,13 +52,18 @@ def _cmd_report(args: argparse.Namespace) -> int:
         try:
             time_from = datetime.strptime(args.from_date, "%Y-%m-%d").replace(tzinfo=UTC)
         except ValueError:
-            print(f"ERROR: invalid --from date '{args.from_date}' (expected YYYY-MM-DD)", file=sys.stderr)
+            print(
+                f"ERROR: invalid --from date '{args.from_date}' (expected YYYY-MM-DD)",
+                file=sys.stderr,
+            )
             return 1
     if args.to_date:
         try:
             time_to = datetime.strptime(args.to_date, "%Y-%m-%d").replace(tzinfo=UTC)
         except ValueError:
-            print(f"ERROR: invalid --to date '{args.to_date}' (expected YYYY-MM-DD)", file=sys.stderr)
+            print(
+                f"ERROR: invalid --to date '{args.to_date}' (expected YYYY-MM-DD)", file=sys.stderr
+            )
             return 1
 
     packets = archive.query(time_from=time_from, time_to=time_to)
@@ -110,9 +117,11 @@ def _cmd_replay(args: argparse.Namespace) -> int:
                     line = line.strip()
                     if line:
                         from partenit.core.models import DecisionPacket
+
                         packets.append(DecisionPacket.model_validate_json(line))
         else:
             from partenit.core.models import DecisionPacket
+
             data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, list):
                 packets = [DecisionPacket.model_validate(d) for d in data]
@@ -145,6 +154,7 @@ def _print_replay_terminal(packets: list, source: str) -> None:
     """Print decision replay in terminal using rich (if available) or plain text."""
     try:
         import rich  # noqa: F401
+
         _rich_replay(packets, source)
     except ImportError:
         _plain_replay(packets, source)
@@ -155,7 +165,9 @@ def _rich_replay(packets: list, source: str) -> None:
     from rich.table import Table
 
     console = Console()
-    console.print(f"\n[bold cyan]Decision Replay[/] — {source} ([yellow]{len(packets)}[/] packets)\n")
+    console.print(
+        f"\n[bold cyan]Decision Replay[/] — {source} ([yellow]{len(packets)}[/] packets)\n"
+    )
 
     blocked = sum(1 for p in packets if not p.guard_decision.allowed)
     modified = sum(1 for p in packets if p.guard_decision.modified_params)
@@ -205,7 +217,9 @@ def _plain_replay(packets: list, source: str) -> None:
 
     blocked = sum(1 for p in packets if not p.guard_decision.allowed)
     modified = sum(1 for p in packets if p.guard_decision.modified_params)
-    print(f"\nSummary: {len(packets)} total | {blocked} blocked | {modified} modified | {len(packets)-blocked-modified} allowed\n")
+    print(
+        f"\nSummary: {len(packets)} total | {blocked} blocked | {modified} modified | {len(packets) - blocked - modified} allowed\n"
+    )
 
 
 def _render_replay_html(packets: list, title: str = "Decision Replay") -> str:
@@ -229,7 +243,7 @@ def _render_replay_html(packets: list, title: str = "Decision Replay") -> str:
             detail = ""
         rows.append(
             f'<tr class="{row_cls}"><td>{ts}</td><td>{status}</td>'
-            f'<td>{p.action_requested}</td><td>{risk_val}</td><td>{detail}</td></tr>'
+            f"<td>{p.action_requested}</td><td>{risk_val}</td><td>{detail}</td></tr>"
         )
 
     rows_html = "\n".join(rows)
@@ -255,7 +269,7 @@ td{{padding:.4rem 1rem;border-bottom:1px solid #1e293b;}}
 </style></head>
 <body>
 <h1>Decision Replay — {title}</h1>
-<p class="summary">{len(packets)} packets | {blocked} blocked | {modified} modified | {len(packets)-blocked-modified} allowed</p>
+<p class="summary">{len(packets)} packets | {blocked} blocked | {modified} modified | {len(packets) - blocked - modified} allowed</p>
 <table>
 <tr><th>Timestamp</th><th>Status</th><th>Action</th><th>Risk</th><th>Policies / Reason</th></tr>
 {rows_html}
@@ -311,10 +325,12 @@ def _cmd_record_show(args: argparse.Namespace) -> int:
 
     print(f"\nSession: {args.session_name}")
     print(f"  Packets  : {len(packets)}")
-    print(f"  Period   : {t_start.strftime('%Y-%m-%d %H:%M:%S')} → {t_end.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"  Blocked  : {blocked} ({100*blocked/len(packets):.0f}%)")
-    print(f"  Modified : {modified} ({100*modified/len(packets):.0f}%)")
-    print(f"  Allowed  : {len(packets)-blocked-modified}")
+    print(
+        f"  Period   : {t_start.strftime('%Y-%m-%d %H:%M:%S')} → {t_end.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+    print(f"  Blocked  : {blocked} ({100 * blocked / len(packets):.0f}%)")
+    print(f"  Modified : {modified} ({100 * modified / len(packets):.0f}%)")
+    print(f"  Allowed  : {len(packets) - blocked - modified}")
     print()
     return 0
 
@@ -361,9 +377,7 @@ def main() -> None:
     # inspect
     p_inspect = sub.add_parser("inspect", help="Inspect a specific packet")
     p_inspect.add_argument("packet_id", help="Packet ID to inspect")
-    p_inspect.add_argument(
-        "--storage-dir", default="./decisions/", help="Decisions directory"
-    )
+    p_inspect.add_argument("--storage-dir", default="./decisions/", help="Decisions directory")
 
     # replay
     p_replay = sub.add_parser("replay", help="Replay decision timeline in terminal or HTML")

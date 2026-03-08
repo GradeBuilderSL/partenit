@@ -15,6 +15,7 @@ from __future__ import annotations
 
 try:
     import rclpy  # noqa: F401
+
     _RCLPY_AVAILABLE = True
 except ImportError:
     _RCLPY_AVAILABLE = False
@@ -52,6 +53,7 @@ class ROS2Adapter(RobotAdapter):
 
     def _init_node(self) -> None:
         import rclpy
+
         rclpy.init()
         # Node initialization — simplified for open-source version
         # Full implementation with message type support is enterprise
@@ -68,6 +70,7 @@ class ROS2Adapter(RobotAdapter):
 
     def get_health(self) -> dict:
         from datetime import datetime
+
         return {
             "status": "ok" if self._node else "not_initialized",
             "robot_id": self.node_name,
@@ -81,5 +84,6 @@ class ROS2Adapter(RobotAdapter):
         """Clean up ROS2 node."""
         if self._node:
             import rclpy
+
             self._node.destroy_node()
             rclpy.shutdown()

@@ -49,19 +49,19 @@ class MockRobot:
         if guard_decision is not None:
             if not guard_decision.allowed:
                 self.stopped = True
-                self.events.append(
-                    {"type": "stop", "reason": guard_decision.rejection_reason}
-                )
+                self.events.append({"type": "stop", "reason": guard_decision.rejection_reason})
                 return
             mp = guard_decision.modified_params
             if mp and "speed" in mp:
                 new_speed = float(mp["speed"])
                 if new_speed < self.current_speed:
-                    self.events.append({
-                        "type": "slowdown",
-                        "from": self.current_speed,
-                        "to": new_speed,
-                    })
+                    self.events.append(
+                        {
+                            "type": "slowdown",
+                            "from": self.current_speed,
+                            "to": new_speed,
+                        }
+                    )
                 self.current_speed = new_speed
             else:
                 # Guard allows without speed restriction → restore to initial
@@ -77,9 +77,7 @@ class MockRobot:
         if dist < 0.01:
             return  # Reached goal
 
-        speed = (
-            min(self.current_speed, dist / dt) if dt > 0 else self.current_speed
-        )
+        speed = min(self.current_speed, dist / dt) if dt > 0 else self.current_speed
         self.x += (dx / dist) * speed * dt
         self.y += (dy / dist) * speed * dt
 

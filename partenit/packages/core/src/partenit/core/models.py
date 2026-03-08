@@ -45,9 +45,7 @@ class StructuredObservation(BaseModel):
         description="(vx, vy, vz) in m/s",
     )
     confidence: float = Field(ge=0.0, le=1.0, description="Detection confidence [0, 1]")
-    depth_variance: float = Field(
-        default=0.0, ge=0.0, description="Depth sensor noise indicator"
-    )
+    depth_variance: float = Field(default=0.0, ge=0.0, description="Depth sensor noise indicator")
     sensor_trust: float = Field(
         default=1.0, ge=0.0, le=1.0, description="Trust level of the source sensor [0, 1]"
     )
@@ -123,9 +121,7 @@ class PolicyCondition(BaseModel):
     )
     value: Any = Field(default=None, description="Threshold value to compare against")
     unit: str | None = Field(default=None)
-    logic: str | None = Field(
-        default=None, description="'and' | 'or' for compound conditions"
-    )
+    logic: str | None = Field(default=None, description="'and' | 'or' for compound conditions")
     conditions: list[PolicyCondition] = Field(
         default_factory=list,
         description="Sub-conditions for compound type",
@@ -268,10 +264,10 @@ class GuardDecision(BaseModel):
 class TrustMode(StrEnum):
     """Sensor trust quality modes."""
 
-    NOMINAL = "nominal"         # trust > 0.8
-    DEGRADED = "degraded"       # 0.5 – 0.8
-    UNRELIABLE = "unreliable"   # 0.2 – 0.5
-    FAILED = "failed"           # < 0.2
+    NOMINAL = "nominal"  # trust > 0.8
+    DEGRADED = "degraded"  # 0.5 – 0.8
+    UNRELIABLE = "unreliable"  # 0.2 – 0.5
+    FAILED = "failed"  # < 0.2
 
     @classmethod
     def from_value(cls, trust: float) -> TrustMode:

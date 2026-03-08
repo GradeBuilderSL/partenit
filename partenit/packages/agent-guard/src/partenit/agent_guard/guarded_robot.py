@@ -161,6 +161,7 @@ class GuardedRobot:
     def stop(self) -> None:
         """Emergency stop — sends block decision directly to adapter."""
         from partenit.core.models import RiskScore
+
         decision = GuardDecision(
             allowed=False,
             rejection_reason="manual_stop",
@@ -200,9 +201,7 @@ class GuardedRobot:
 
     def __repr__(self) -> str:
         adapter_name = type(self._adapter).__name__
-        policies = (
-            len(self._guard._bundle.rules) if self._guard._bundle else 0
-        )
+        policies = len(self._guard._bundle.rules) if self._guard._bundle else 0
         return (
             f"GuardedRobot(adapter={adapter_name}, "
             f"policies={policies}, "
@@ -213,6 +212,7 @@ class GuardedRobot:
 # ------------------------------------------------------------------
 # Internal helpers
 # ------------------------------------------------------------------
+
 
 def _build_context(observations: list[Any]) -> dict[str, Any]:
     """
@@ -248,12 +248,14 @@ def _build_context(observations: list[Any]) -> dict[str, Any]:
         if distance is None:
             pos = getattr(obs, "position_3d", None)
             if isinstance(pos, (tuple, list)) and len(pos) >= 2:
-                distance = float((pos[0] ** 2 + pos[1] ** 2 + (pos[2] if len(pos) > 2 else 0.0) ** 2) ** 0.5)
+                distance = float(
+                    (pos[0] ** 2 + pos[1] ** 2 + (pos[2] if len(pos) > 2 else 0.0) ** 2) ** 0.5
+                )
         if distance is None:
             x = getattr(obs, "x", None)
             y = getattr(obs, "y", None)
             if x is not None and y is not None:
-                distance = float((x ** 2 + y ** 2) ** 0.5)
+                distance = float((x**2 + y**2) ** 0.5)
 
         if is_human and distance is not None and distance < nearest_dist:
             nearest_dist = distance

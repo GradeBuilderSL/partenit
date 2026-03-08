@@ -174,9 +174,7 @@ class EvalRunner:
             EvalReport aggregating results from all scenarios.
         """
         scenario_dir = Path(scenario_dir)
-        files = sorted(
-            list(scenario_dir.glob("**/*.yaml")) + list(scenario_dir.glob("**/*.yml"))
-        )
+        files = sorted(list(scenario_dir.glob("**/*.yaml")) + list(scenario_dir.glob("**/*.yml")))
 
         combined = EvalReport(controllers=[c.name for c in controllers])
 

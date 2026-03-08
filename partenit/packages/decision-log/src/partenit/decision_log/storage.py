@@ -58,10 +58,7 @@ class InMemoryStorage(DecisionStorage):
         if date is None:
             return list(self._packets)
         target = date.date()
-        return [
-            p for p in self._packets
-            if p.timestamp.date() == target
-        ]
+        return [p for p in self._packets if p.timestamp.date() == target]
 
     def __len__(self) -> int:
         return len(self._packets)
@@ -119,18 +116,13 @@ class LocalFileStorage(DecisionStorage):
         packets: list[DecisionPacket] = []
         for path in sorted(self.storage_dir.glob("*.jsonl")):
             try:
-                file_date = datetime.strptime(path.stem, "%Y-%m-%d").replace(
-                    tzinfo=UTC
-                )
+                file_date = datetime.strptime(path.stem, "%Y-%m-%d").replace(tzinfo=UTC)
                 if start.date() <= file_date.date() <= end.date():
                     packets.extend(self.read_all(file_date))
             except ValueError:
                 continue
         # Filter by exact timestamp
-        return [
-            p for p in packets
-            if start <= p.timestamp.replace(tzinfo=UTC) <= end
-        ]
+        return [p for p in packets if start <= p.timestamp.replace(tzinfo=UTC) <= end]
 
     def list_dates(self) -> list[str]:
         """Return list of dates (YYYY-MM-DD) for which log files exist."""

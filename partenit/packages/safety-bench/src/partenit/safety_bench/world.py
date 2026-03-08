@@ -147,17 +147,20 @@ class MockWorld:
         obs = []
         for obj in visible:
             eff_trust = min(1.0, obj.sensor_trust * global_trust)
-            obs.append(StructuredObservation(
-                object_id=obj.object_id,
-                class_best=obj.class_label,
-                class_set=[obj.class_label] + (["human"] if obj.class_label == "person" else []),
-                position_3d=(
-                    obj.x - self._robot_x,
-                    obj.y - self._robot_y,
-                    obj.z,
-                ),
-                velocity=(obj.vx, obj.vy, 0.0),
-                confidence=obj.confidence,
-                sensor_trust=eff_trust,
-            ))
+            obs.append(
+                StructuredObservation(
+                    object_id=obj.object_id,
+                    class_best=obj.class_label,
+                    class_set=[obj.class_label]
+                    + (["human"] if obj.class_label == "person" else []),
+                    position_3d=(
+                        obj.x - self._robot_x,
+                        obj.y - self._robot_y,
+                        obj.z,
+                    ),
+                    velocity=(obj.vx, obj.vy, 0.0),
+                    confidence=obj.confidence,
+                    sensor_trust=eff_trust,
+                )
+            )
         return obs

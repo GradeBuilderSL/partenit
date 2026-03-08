@@ -17,8 +17,10 @@ from pathlib import Path
 
 def _cmd_run(args: argparse.Namespace) -> int:
     from partenit.safety_bench.scenario import ScenarioRunner
+
     try:
         from rich.console import Console
+
         console = Console()
     except ImportError:
         console = None
@@ -51,6 +53,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     if args.report:
         from partenit.safety_bench.benchmarks.report_html import generate_html_report
+
         html = generate_html_report(results, title=f"Partenit Bench — {config.scenario_id}")
         Path(args.report).write_text(html, encoding="utf-8")
         print(f"HTML report written to {args.report}")
@@ -92,6 +95,7 @@ def _cmd_run_all(args: argparse.Namespace) -> int:
 
     if args.report and all_results:
         from partenit.safety_bench.benchmarks.report_html import generate_html_report
+
         html = generate_html_report(all_results, title="Partenit Safety Bench — All Scenarios")
         Path(args.report).write_text(html, encoding="utf-8")
         print(f"HTML report written to {args.report}")
@@ -149,11 +153,15 @@ def main() -> None:
     # run
     p_run = sub.add_parser("run", help="Run a single scenario")
     p_run.add_argument("path", help="Path to scenario YAML file")
-    p_run.add_argument("--with-guard", action="store_true", default=True, help="Run with guard (default)")
+    p_run.add_argument(
+        "--with-guard", action="store_true", default=True, help="Run with guard (default)"
+    )
     p_run.add_argument("--without-guard", action="store_true", help="Run without guard")
     p_run.add_argument("--compare", action="store_true", help="Run both with and without guard")
     p_run.add_argument("--report", metavar="FILE", help="Write HTML report to FILE")
-    p_run.add_argument("--seed", type=int, default=42, help="Random seed for determinism (default: 42)")
+    p_run.add_argument(
+        "--seed", type=int, default=42, help="Random seed for determinism (default: 42)"
+    )
 
     # run-all
     p_all = sub.add_parser("run-all", help="Run all scenarios in a directory")
@@ -161,13 +169,21 @@ def main() -> None:
     p_all.add_argument("--with-guard", action="store_true", default=True)
     p_all.add_argument("--without-guard", action="store_true", help="Also run without guard")
     p_all.add_argument("--report", metavar="FILE", help="Write HTML report to FILE")
-    p_all.add_argument("--seed", type=int, default=42, help="Random seed for determinism (default: 42)")
+    p_all.add_argument(
+        "--seed", type=int, default=42, help="Random seed for determinism (default: 42)"
+    )
 
     # report
-    p_report = sub.add_parser("report", help="Generate HTML bench report from a scenarios directory")
+    p_report = sub.add_parser(
+        "report", help="Generate HTML bench report from a scenarios directory"
+    )
     p_report.add_argument("path", nargs="?", help="Scenarios directory (default: ./scenarios/)")
-    p_report.add_argument("--output", "-o", metavar="FILE", help="Output HTML file (default: stdout)")
-    p_report.add_argument("--seed", type=int, default=42, help="Random seed for determinism (default: 42)")
+    p_report.add_argument(
+        "--output", "-o", metavar="FILE", help="Output HTML file (default: stdout)"
+    )
+    p_report.add_argument(
+        "--seed", type=int, default=42, help="Random seed for determinism (default: 42)"
+    )
 
     args = parser.parse_args()
     handlers = {

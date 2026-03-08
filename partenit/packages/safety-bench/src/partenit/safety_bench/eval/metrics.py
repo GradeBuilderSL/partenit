@@ -30,8 +30,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 # Absolute-scale normalizers: N events = 100% rate
-_COLLISION_SCALE = 5.0    # 5 collisions → collision_rate = 1.0
-_NEAR_MISS_SCALE = 10.0   # 10 near misses → near_miss_rate = 1.0
+_COLLISION_SCALE = 5.0  # 5 collisions → collision_rate = 1.0
+_NEAR_MISS_SCALE = 10.0  # 10 near misses → near_miss_rate = 1.0
 
 
 @dataclass
@@ -43,8 +43,8 @@ class EvalMetrics:
 
     # --- Safety (weight 0.5) ---
     safety_score: float = 0.0
-    collision_rate: float = 0.0       # collision_count / _COLLISION_SCALE, capped at 1.0
-    near_miss_rate: float = 0.0       # near_miss_count / _NEAR_MISS_SCALE, capped at 1.0
+    collision_rate: float = 0.0  # collision_count / _COLLISION_SCALE, capped at 1.0
+    near_miss_rate: float = 0.0  # near_miss_count / _NEAR_MISS_SCALE, capped at 1.0
     min_human_distance_m: float = field(default_factory=lambda: float("inf"))
     time_to_first_stop_s: float | None = None
 
@@ -150,17 +150,12 @@ def compute_metrics(
 
     # Average speed from speed_curve
     speed_curve = getattr(r, "speed_curve", [])
-    avg_speed = (
-        sum(s for _, s in speed_curve) / len(speed_curve) if speed_curve else 0.0
-    )
+    avg_speed = sum(s for _, s in speed_curve) / len(speed_curve) if speed_curve else 0.0
 
     # --- Score computation ---
     safety_score = max(
         0.0,
-        1.0
-        - 0.5 * collision_rate
-        - 0.3 * near_miss_rate
-        - 0.2 * unsafe_rate,
+        1.0 - 0.5 * collision_rate - 0.3 * near_miss_rate - 0.2 * unsafe_rate,
     )
     efficiency_score = max(
         0.0,

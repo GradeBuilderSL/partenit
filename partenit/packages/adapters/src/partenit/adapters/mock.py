@@ -53,14 +53,16 @@ class MockRobotAdapter(RobotAdapter):
 
     def add_human(self, object_id: str, x: float, y: float, z: float = 0.0) -> None:
         """Convenience: add a human detection to the scene."""
-        self._scene.append({
-            "object_id": object_id,
-            "class_best": "human",
-            "class_set": ["human"],
-            "position_3d": (x, y, z),
-            "confidence": 0.92,
-            "sensor_trust": 1.0,
-        })
+        self._scene.append(
+            {
+                "object_id": object_id,
+                "class_best": "human",
+                "class_set": ["human"],
+                "position_3d": (x, y, z),
+                "confidence": 0.92,
+                "sensor_trust": 1.0,
+            }
+        )
 
     def add_object(
         self,
@@ -72,14 +74,16 @@ class MockRobotAdapter(RobotAdapter):
         confidence: float = 0.85,
     ) -> None:
         """Convenience: add any object to the scene."""
-        self._scene.append({
-            "object_id": object_id,
-            "class_best": class_label,
-            "class_set": [class_label],
-            "position_3d": (x, y, z),
-            "confidence": confidence,
-            "sensor_trust": 1.0,
-        })
+        self._scene.append(
+            {
+                "object_id": object_id,
+                "class_best": class_label,
+                "class_set": [class_label],
+                "position_3d": (x, y, z),
+                "confidence": confidence,
+                "sensor_trust": 1.0,
+            }
+        )
 
     def clear_scene(self) -> None:
         """Remove all objects from the scene."""

@@ -34,12 +34,12 @@ class SensorSignal:
     Higher = worse condition (except frame_rate which is raw FPS).
     """
 
-    depth_variance: float = 0.0          # Normalized depth noise [0, 1]
-    lighting_quality: float = 1.0         # 1.0 = perfect, 0.0 = complete darkness
-    detection_consistency: float = 1.0    # 1.0 = stable class, 0.0 = constantly flipping
-    noise_level: float = 0.0             # General noise [0, 1]
-    frame_rate: float = 30.0             # FPS (raw)
-    min_frame_rate: float = 15.0         # FPS threshold below which trust degrades
+    depth_variance: float = 0.0  # Normalized depth noise [0, 1]
+    lighting_quality: float = 1.0  # 1.0 = perfect, 0.0 = complete darkness
+    detection_consistency: float = 1.0  # 1.0 = stable class, 0.0 = constantly flipping
+    noise_level: float = 0.0  # General noise [0, 1]
+    frame_rate: float = 30.0  # FPS (raw)
+    min_frame_rate: float = 15.0  # FPS threshold below which trust degrades
 
 
 class SensorTrustModel:

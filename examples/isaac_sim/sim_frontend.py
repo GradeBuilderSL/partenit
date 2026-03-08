@@ -29,6 +29,7 @@ def wrap_text(text: str, width: int = 80) -> str:
 @dataclass
 class SimGUICallbacks:
     """Callbacks for PartenitDemoGUI. Main script provides implementations. No hasattr in main path."""
+
     get_latest_camera_bytes: Callable[[], bytes | None]
     add_user_message: Callable[[str], None]  # Show user msg immediately (main thread)
     on_send_command: Callable[[str, bytes | None], None]
@@ -52,9 +53,12 @@ class SimGUICallbacks:
 
 class PartenitDemoGUI:
     """Partenit decision-making panel. Uses callbacks for all logic."""
+
     def __init__(self, callbacks: SimGUICallbacks):
         self.callbacks = callbacks
-        self.window = ui.Window("PARTENIT", width=420, height=1000, dockPreference=ui.DockPreference.RIGHT)
+        self.window = ui.Window(
+            "PARTENIT", width=420, height=1000, dockPreference=ui.DockPreference.RIGHT
+        )
         self.window.deferred_dock_in("Property", ui.DockPolicy.DO_NOTHING)
         self._create_ui()
 
@@ -63,30 +67,83 @@ class PartenitDemoGUI:
         with self.window.frame:
             with ui.VStack(spacing=0, style={"background_color": (0.1, 0.1, 0.1)}):
                 with ui.HStack(height=40, spacing=10, padding=5):
-                    ui.Label("PARTENIT. Self-Control Layer", style={"font_size": 20, "font_weight": "bold", "color": (0.3, 0.8, 1.0)})
+                    ui.Label(
+                        "PARTENIT. Self-Control Layer",
+                        style={"font_size": 20, "font_weight": "bold", "color": (0.3, 0.8, 1.0)},
+                    )
                     ui.Spacer()
-                    self.enable_btn = ui.Button("ENABLE BRAIN", clicked_fn=cb.on_toggle_enable, width=120, height=35,
-                                                style={"background_color": (0.2, 0.6, 0.3), "font_weight": "bold", "font_size": 14})
+                    self.enable_btn = ui.Button(
+                        "ENABLE BRAIN",
+                        clicked_fn=cb.on_toggle_enable,
+                        width=120,
+                        height=35,
+                        style={
+                            "background_color": (0.2, 0.6, 0.3),
+                            "font_weight": "bold",
+                            "font_size": 14,
+                        },
+                    )
 
                 ui.Separator(height=1, style={"color": (0.3, 0.3, 0.3)})
 
                 with ui.HStack(height=40, spacing=4, padding=2):
                     ui.Label("Scenarios:", style={"font_size": 14, "color": (0.6, 0.6, 0.6)})
-                    ui.Button("HUMAN", clicked_fn=cb.on_scenario_hri, height=26, style={"background_color": (0.3, 0.4, 0.5)})
-                    ui.Button("LOW BAT", clicked_fn=cb.on_scenario_battery, height=26, style={"background_color": (0.5, 0.3, 0.2)})
-                    ui.Button("Explore", clicked_fn=cb.on_scenario_handoff, height=26, style={"background_color": (0.2, 0.5, 0.4)})
-                    ui.Button("Clear chat", clicked_fn=cb.on_clear, height=26, style={"background_color": (0.3, 0.3, 0.3)})
-                    ui.Button("Load Map", clicked_fn=cb.on_learn_map, height=26, style={"background_color": (0.4, 0.3, 0.5)})
+                    ui.Button(
+                        "HUMAN",
+                        clicked_fn=cb.on_scenario_hri,
+                        height=26,
+                        style={"background_color": (0.3, 0.4, 0.5)},
+                    )
+                    ui.Button(
+                        "LOW BAT",
+                        clicked_fn=cb.on_scenario_battery,
+                        height=26,
+                        style={"background_color": (0.5, 0.3, 0.2)},
+                    )
+                    ui.Button(
+                        "Explore",
+                        clicked_fn=cb.on_scenario_handoff,
+                        height=26,
+                        style={"background_color": (0.2, 0.5, 0.4)},
+                    )
+                    ui.Button(
+                        "Clear chat",
+                        clicked_fn=cb.on_clear,
+                        height=26,
+                        style={"background_color": (0.3, 0.3, 0.3)},
+                    )
+                    ui.Button(
+                        "Load Map",
+                        clicked_fn=cb.on_learn_map,
+                        height=26,
+                        style={"background_color": (0.4, 0.3, 0.5)},
+                    )
 
                 ui.Separator(height=1, style={"color": (0.3, 0.3, 0.3)})
 
                 with ui.VStack(spacing=2, padding=3, height=ui.Fraction(1)):
-                    self.chat_text = ui.StringField(multiline=True, height=ui.Fraction(1), read_only=True,
-                                                    style={"font_size": 18, "background_color": (0.05, 0.05, 0.05), "color": (0.95, 0.95, 0.95)})
+                    self.chat_text = ui.StringField(
+                        multiline=True,
+                        height=ui.Fraction(1),
+                        read_only=True,
+                        style={
+                            "font_size": 18,
+                            "background_color": (0.05, 0.05, 0.05),
+                            "color": (0.95, 0.95, 0.95),
+                        },
+                    )
                     with ui.HStack(height=50, spacing=8):
                         self.cmd_field = ui.StringField(style={"font_size": 18})
-                        ui.Button("SEND", clicked_fn=self._on_send_command, width=100,
-                                  style={"background_color": (0.2, 0.4, 0.6), "font_size": 15, "font_weight": "bold"})
+                        ui.Button(
+                            "SEND",
+                            clicked_fn=self._on_send_command,
+                            width=100,
+                            style={
+                                "background_color": (0.2, 0.4, 0.6),
+                                "font_size": 15,
+                                "font_weight": "bold",
+                            },
+                        )
 
     def _sync_tunables_from_state(self):
         """Initialize Advanced sliders from get_sim_tunables()."""
@@ -128,7 +185,11 @@ class PartenitDemoGUI:
         """Refresh trace, chat, enable button from callbacks."""
         enabled = self.callbacks.get_enabled()
         self.enable_btn.text = "DISABLE BRAIN" if enabled else "ENABLE BRAIN"
-        self.enable_btn.style = {"background_color": (0.6, 0.2, 0.2) if enabled else (0.2, 0.6, 0.3), "font_weight": "bold", "font_size": 14}
+        self.enable_btn.style = {
+            "background_color": (0.6, 0.2, 0.2) if enabled else (0.2, 0.6, 0.3),
+            "font_weight": "bold",
+            "font_size": 14,
+        }
         self.callbacks.get_trace() or "READY"
         # trace_text removed from UI
         chat_history = self.callbacks.get_chat_history()

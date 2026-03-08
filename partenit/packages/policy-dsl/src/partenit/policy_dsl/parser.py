@@ -170,6 +170,8 @@ class PolicyParser:
             try:
                 rules.append(_parse_rule(item))
             except (KeyError, TypeError, ValueError) as exc:
-                rule_id = item.get("rule_id", f"index-{i}") if isinstance(item, dict) else f"index-{i}"
+                rule_id = (
+                    item.get("rule_id", f"index-{i}") if isinstance(item, dict) else f"index-{i}"
+                )
                 logger.error("Failed to parse rule '%s' from %s: %s", rule_id, source, exc)
         return rules

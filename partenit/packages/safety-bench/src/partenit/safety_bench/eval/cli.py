@@ -109,7 +109,9 @@ def main() -> None:
     p_run.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
 
     # run-suite
-    p_suite = sub.add_parser("run-suite", help="Evaluate controllers on all scenarios in a directory")
+    p_suite = sub.add_parser(
+        "run-suite", help="Evaluate controllers on all scenarios in a directory"
+    )
     p_suite.add_argument("directory", help="Directory containing scenario YAML files")
     p_suite.add_argument("--report", "-o", help="Output HTML report path")
     p_suite.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")

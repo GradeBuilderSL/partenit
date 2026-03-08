@@ -128,6 +128,7 @@ def _print_sim_result(action: str, speed, context: dict, result, all_rules) -> N
     try:
         from rich.console import Console
         from rich.table import Table
+
         console = Console()
 
         console.print("\n[bold cyan]Policy Simulator[/]\n")
@@ -191,7 +192,10 @@ def _print_sim_result(action: str, speed, context: dict, result, all_rules) -> N
             mark = "FIRED" if fired else "    -"
             print(f"  [{mark}] {rule.name or rule.rule_id} [{rule.priority}]")
         clamps = result.get_clamps()
-        print("\nResult:", "BLOCKED" if result.has_violations else ("MODIFIED" if clamps else "ALLOWED"))
+        print(
+            "\nResult:",
+            "BLOCKED" if result.has_violations else ("MODIFIED" if clamps else "ALLOWED"),
+        )
         for p, v in clamps.items():
             print(f"  {p} → {v}")
         print()
@@ -229,7 +233,9 @@ def main() -> None:
     p_sim.add_argument("--action", default="navigate_to", help="Action name (default: navigate_to)")
     p_sim.add_argument("--speed", type=float, default=None, help="Requested speed (m/s)")
     p_sim.add_argument("--human-distance", type=float, default=None, help="Human distance (m)")
-    p_sim.add_argument("--human-confidence", type=float, default=None, help="Human detection confidence (0-1)")
+    p_sim.add_argument(
+        "--human-confidence", type=float, default=None, help="Human detection confidence (0-1)"
+    )
     p_sim.add_argument("--sensor-trust", type=float, default=None, help="Global sensor trust (0-1)")
     p_sim.add_argument("--policy-path", default=None, help="Path to policies (file or dir)")
 

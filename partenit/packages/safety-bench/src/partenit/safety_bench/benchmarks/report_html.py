@@ -144,9 +144,9 @@ def _svg_timeseries(
         val = frac * y_max
         y = ty(val)
         grid += (
-            f'<line x1="{p}" y1="{y:.1f}" x2="{w-p}" y2="{y:.1f}" '
+            f'<line x1="{p}" y1="{y:.1f}" x2="{w - p}" y2="{y:.1f}" '
             f'stroke="#1e2d40" stroke-width="1"/>'
-            f'<text x="{p-4}" y="{y+4:.1f}" fill="#334155" font-size="9" '
+            f'<text x="{p - 4}" y="{y + 4:.1f}" fill="#334155" font-size="9" '
             f'text-anchor="end">{val:.2f}</text>'
         )
 
@@ -157,37 +157,37 @@ def _svg_timeseries(
         t_val = t_max * i / n
         x = tx(t_val)
         xticks += (
-            f'<line x1="{x:.1f}" y1="{h-p}" x2="{x:.1f}" y2="{h-p+4}" '
+            f'<line x1="{x:.1f}" y1="{h - p}" x2="{x:.1f}" y2="{h - p + 4}" '
             f'stroke="#334155" stroke-width="1"/>'
-            f'<text x="{x:.1f}" y="{h-p+14}" fill="#334155" font-size="9" '
+            f'<text x="{x:.1f}" y="{h - p + 14}" fill="#334155" font-size="9" '
             f'text-anchor="middle">{t_val:.1f}s</text>'
         )
 
     # Event markers (stop = red dashes, slowdown = amber dashes)
     evt_marks = ""
-    for evt in (events or []):
+    for evt in events or []:
         et = evt.get("time", -1)
         if 0 <= et <= t_max:
             ec = "#ef4444" if evt.get("type") == "stop" else "#f59e0b"
             ex = tx(et)
             evt_marks += (
-                f'<line x1="{ex:.1f}" y1="{p}" x2="{ex:.1f}" y2="{h-p}" '
+                f'<line x1="{ex:.1f}" y1="{p}" x2="{ex:.1f}" y2="{h - p}" '
                 f'stroke="{ec}" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>'
             )
 
     return (
         f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
         f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="6"/>'
-        f'{grid}'
-        f'<line x1="{p}" y1="{p//2}" x2="{p}" y2="{h-p}" stroke="#2d3f55" stroke-width="1"/>'
-        f'<line x1="{p}" y1="{h-p}" x2="{w-p}" y2="{h-p}" stroke="#2d3f55" stroke-width="1"/>'
-        f'{xticks}'
-        f'{evt_marks}'
+        f"{grid}"
+        f'<line x1="{p}" y1="{p // 2}" x2="{p}" y2="{h - p}" stroke="#2d3f55" stroke-width="1"/>'
+        f'<line x1="{p}" y1="{h - p}" x2="{w - p}" y2="{h - p}" stroke="#2d3f55" stroke-width="1"/>'
+        f"{xticks}"
+        f"{evt_marks}"
         f'<polygon points="{clip_pts}" fill="{color}" opacity="0.12"/>'
         f'<polyline points="{line_pts}" fill="none" stroke="{color}" stroke-width="2"/>'
-        f'<text x="{w//2}" y="14" fill="#64748b" font-size="10" '
+        f'<text x="{w // 2}" y="14" fill="#64748b" font-size="10" '
         f'text-anchor="middle" font-style="italic">{title}</text>'
-        f'</svg>'
+        f"</svg>"
     )
 
 
@@ -212,7 +212,7 @@ def _svg_2d_replay(
             f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
             f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="6"/>'
             f'<text x="20" y="40" fill="#475569" font-size="12">No trajectory data</text>'
-            f'</svg>'
+            f"</svg>"
         )
 
     margin = 1.5
@@ -231,7 +231,7 @@ def _svg_2d_replay(
         return x_off + (x - x_min) * scale
 
     def ty(y: float) -> float:
-        return y_off + (y_max - y) * scale   # flip Y so up = north
+        return y_off + (y_max - y) * scale  # flip Y so up = north
 
     robot_pts = " ".join(f"{tx(p[0]):.1f},{ty(p[1]):.1f}" for p in robot_trajectory)
 
@@ -247,7 +247,7 @@ def _svg_2d_replay(
             f'stroke-width="2.5" opacity="0.85"/>'
             f'<circle cx="{tx(s[0]):.1f}" cy="{ty(s[1]):.1f}" r="4" fill="{col}" opacity="0.45"/>'
             f'<circle cx="{tx(e[0]):.1f}" cy="{ty(e[1]):.1f}" r="7" fill="{col}"/>'
-            f'<text x="{tx(e[0])+10:.1f}" y="{ty(e[1])+4:.1f}" fill="{col}" '
+            f'<text x="{tx(e[0]) + 10:.1f}" y="{ty(e[1]) + 4:.1f}" fill="{col}" '
             f'font-size="10">{hid}</text>'
         )
 
@@ -282,43 +282,43 @@ def _svg_2d_replay(
                 )
             else:
                 stop_marks += (
-                    f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="5" '
-                    f'fill="#f59e0b" opacity="0.75"/>'
+                    f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="5" fill="#f59e0b" opacity="0.75"/>'
                 )
 
     legend = (
-        f'<circle cx="50" cy="{h-15}" r="5" fill="#3b82f6"/>'
-        f'<text x="60" y="{h-11}" fill="#60a5fa" font-size="10">Robot</text>'
-        f'<circle cx="115" cy="{h-15}" r="6" fill="none" stroke="#22c55e" stroke-width="2"/>'
-        f'<text x="126" y="{h-11}" fill="#22c55e" font-size="10">Goal</text>'
-        f'<circle cx="180" cy="{h-15}" r="5" fill="#f87171"/>'
-        f'<text x="190" y="{h-11}" fill="#f87171" font-size="10">Human</text>'
-        f'<circle cx="248" cy="{h-15}" r="5" fill="#f59e0b" opacity="0.8"/>'
-        f'<text x="258" y="{h-11}" fill="#f59e0b" font-size="10">Slow</text>'
-        f'<circle cx="300" cy="{h-15}" r="7" fill="none" stroke="#ef4444" stroke-width="1.5"/>'
-        f'<text x="312" y="{h-11}" fill="#ef4444" font-size="10">Stop</text>'
+        f'<circle cx="50" cy="{h - 15}" r="5" fill="#3b82f6"/>'
+        f'<text x="60" y="{h - 11}" fill="#60a5fa" font-size="10">Robot</text>'
+        f'<circle cx="115" cy="{h - 15}" r="6" fill="none" stroke="#22c55e" stroke-width="2"/>'
+        f'<text x="126" y="{h - 11}" fill="#22c55e" font-size="10">Goal</text>'
+        f'<circle cx="180" cy="{h - 15}" r="5" fill="#f87171"/>'
+        f'<text x="190" y="{h - 11}" fill="#f87171" font-size="10">Human</text>'
+        f'<circle cx="248" cy="{h - 15}" r="5" fill="#f59e0b" opacity="0.8"/>'
+        f'<text x="258" y="{h - 11}" fill="#f59e0b" font-size="10">Slow</text>'
+        f'<circle cx="300" cy="{h - 15}" r="7" fill="none" stroke="#ef4444" stroke-width="1.5"/>'
+        f'<text x="312" y="{h - 11}" fill="#ef4444" font-size="10">Stop</text>'
     )
 
     return (
         f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
         f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="6"/>'
         f'<polyline points="{robot_pts}" fill="none" stroke="#3b82f6" stroke-width="2.5"/>'
-        f'{human_svgs}'
-        f'{stop_marks}'
+        f"{human_svgs}"
+        f"{stop_marks}"
         f'<circle cx="{tx(rs[0]):.1f}" cy="{ty(rs[1]):.1f}" r="6" '
         f'fill="#93c5fd" opacity="0.55"/>'
         f'<circle cx="{tx(re[0]):.1f}" cy="{ty(re[1]):.1f}" r="9" fill="#3b82f6"/>'
         f'<circle cx="{gx:.1f}" cy="{gy:.1f}" r="11" fill="none" '
         f'stroke="#22c55e" stroke-width="2.5" stroke-dasharray="6 3"/>'
-        f'<text x="{gx+14:.1f}" y="{gy+4:.1f}" fill="#22c55e" font-size="10">GOAL</text>'
-        f'{legend}'
-        f'</svg>'
+        f'<text x="{gx + 14:.1f}" y="{gy + 4:.1f}" fill="#22c55e" font-size="10">GOAL</text>'
+        f"{legend}"
+        f"</svg>"
     )
 
 
 # ---------------------------------------------------------------------------
 # Card helper
 # ---------------------------------------------------------------------------
+
 
 def _val_class(val: float, low_is_good: bool) -> str:
     if low_is_good:
@@ -340,13 +340,14 @@ def _card(label: str, value: str, cls: str = "neutral") -> str:
         f'<div class="card">'
         f'<div class="lbl">{label}</div>'
         f'<div class="val {cls}">{value}</div>'
-        f'</div>'
+        f"</div>"
     )
 
 
 # ---------------------------------------------------------------------------
 # Per-run section
 # ---------------------------------------------------------------------------
+
 
 def _adm_bar(adm: float) -> str:
     """Render a coloured progress bar for the admissibility score."""
@@ -360,7 +361,7 @@ def _adm_bar(adm: float) -> str:
     return (
         f'<div class="adm-bar-wrap">'
         f'<div class="adm-bar" style="width:{pct}%;background:{color}"></div>'
-        f'</div>'
+        f"</div>"
     )
 
 
@@ -371,11 +372,7 @@ def _render_run(result: ScenarioResult) -> str:
         else '<span class="badge-ng">NO GUARD</span>'
     )
     adm = result.admissibility_score
-    dist_str = (
-        f"{result.min_human_distance_m:.2f}"
-        if result.min_human_distance_m < 1e5
-        else "∞"
-    )
+    dist_str = f"{result.min_human_distance_m:.2f}" if result.min_human_distance_m < 1e5 else "∞"
 
     # Admissibility card with bar
     adm_cls = _val_class(adm, low_is_good=False)
@@ -383,26 +380,45 @@ def _render_run(result: ScenarioResult) -> str:
         f'<div class="card">'
         f'<div class="lbl">Admissibility</div>'
         f'<div class="val {adm_cls}">{adm:.2f}</div>'
-        f'{_adm_bar(adm)}'
-        f'</div>'
+        f"{_adm_bar(adm)}"
+        f"</div>"
     )
 
-    cards = adm_card + "".join([
-        _card("Block rate", f"{result.block_rate:.0%}",
-              "good" if result.block_rate > 0 and result.with_guard else "neutral"),
-        _card("Clamp rate", f"{result.clamp_rate:.0%}"),
-        _card("Collisions", str(result.collision_count),
-              "bad" if result.collision_count > 0 else "good"),
-        _card("Near misses", str(result.near_miss_count),
-              "warn" if result.near_miss_count > 0 else "good"),
-        _card("Min dist (m)", dist_str,
-              "bad" if result.min_human_distance_m < 0.8
-              else "warn" if result.min_human_distance_m < 1.5
-              else "good"),
-        _card("Decisions", str(result.decisions_total)),
-        _card("Goal", "YES" if result.reached_goal else "NO",
-              "good" if result.reached_goal else "warn"),
-    ])
+    cards = adm_card + "".join(
+        [
+            _card(
+                "Block rate",
+                f"{result.block_rate:.0%}",
+                "good" if result.block_rate > 0 and result.with_guard else "neutral",
+            ),
+            _card("Clamp rate", f"{result.clamp_rate:.0%}"),
+            _card(
+                "Collisions",
+                str(result.collision_count),
+                "bad" if result.collision_count > 0 else "good",
+            ),
+            _card(
+                "Near misses",
+                str(result.near_miss_count),
+                "warn" if result.near_miss_count > 0 else "good",
+            ),
+            _card(
+                "Min dist (m)",
+                dist_str,
+                "bad"
+                if result.min_human_distance_m < 0.8
+                else "warn"
+                if result.min_human_distance_m < 1.5
+                else "good",
+            ),
+            _card("Decisions", str(result.decisions_total)),
+            _card(
+                "Goal",
+                "YES" if result.reached_goal else "NO",
+                "good" if result.reached_goal else "warn",
+            ),
+        ]
+    )
 
     # Expected-event status
     event_status = ""
@@ -421,36 +437,36 @@ def _render_run(result: ScenarioResult) -> str:
     trust_chart = ""
     if result.trust_curve and any(v < 0.99 for _, v in result.trust_curve):
         trust_chart = (
-            f'<h3>Global sensor trust over time</h3>'
+            f"<h3>Global sensor trust over time</h3>"
             f'<div class="chart">'
-            f'{_svg_timeseries(result.trust_curve, "#a78bfa", "sensor_trust (0–1)", 1.0, result.events)}'
-            f'</div>'
+            f"{_svg_timeseries(result.trust_curve, '#a78bfa', 'sensor_trust (0–1)', 1.0, result.events)}"
+            f"</div>"
         )
 
     charts_inner = (
-        f'<h3>Risk score over time</h3>'
+        f"<h3>Risk score over time</h3>"
         f'<div class="chart">'
-        f'{_svg_timeseries(result.risk_curve, "#f87171", "risk_score (0–1)", 1.0, result.events)}'
-        f'</div>'
-        f'<h3>Speed over time (m/s)</h3>'
+        f"{_svg_timeseries(result.risk_curve, '#f87171', 'risk_score (0–1)', 1.0, result.events)}"
+        f"</div>"
+        f"<h3>Speed over time (m/s)</h3>"
         f'<div class="chart">'
-        f'{_svg_timeseries(result.speed_curve, "#60a5fa", "speed m/s", speed_max, result.events)}'
-        f'</div>'
-        f'<h3>Distance to nearest human (m)</h3>'
+        f"{_svg_timeseries(result.speed_curve, '#60a5fa', 'speed m/s', speed_max, result.events)}"
+        f"</div>"
+        f"<h3>Distance to nearest human (m)</h3>"
         f'<div class="chart">'
-        f'{_svg_timeseries([(t, min(d, dist_max)) for t, d in result.distance_curve], "#34d399", "distance_to_human m", dist_max, result.events)}'
-        f'</div>'
-        f'{trust_chart}'
+        f"{_svg_timeseries([(t, min(d, dist_max)) for t, d in result.distance_curve], '#34d399', 'distance_to_human m', dist_max, result.events)}"
+        f"</div>"
+        f"{trust_chart}"
     )
-    charts = f'<details open><summary>Time-series charts</summary>{charts_inner}</details>'
+    charts = f"<details open><summary>Time-series charts</summary>{charts_inner}</details>"
 
     # 2D replay
     replay_inner = (
         f'<div class="chart">'
-        f'{_svg_2d_replay(result.robot_trajectory, result.human_trajectories, result.robot_goal, result.events)}'
-        f'</div>'
+        f"{_svg_2d_replay(result.robot_trajectory, result.human_trajectories, result.robot_goal, result.events)}"
+        f"</div>"
     )
-    replay = f'<details open><summary>2D Replay (top-down)</summary>{replay_inner}</details>'
+    replay = f"<details open><summary>2D Replay (top-down)</summary>{replay_inner}</details>"
 
     # Event timeline
     tl_rows = ""
@@ -465,17 +481,16 @@ def _render_run(result: ScenarioResult) -> str:
             f'<div class="tl-row {row_cls}">'
             f'<span class="tl-t">{t:.2f}s</span>'
             f'<span class="tl-ev {etype}">{etype}</span>'
-            f'<span>{detail}</span>'
-            f'</div>'
+            f"<span>{detail}</span>"
+            f"</div>"
         )
     tl_inner = (
         '<div class="timeline">'
         + (tl_rows if tl_rows else '<span style="color:#334155">No events</span>')
-        + '</div>'
+        + "</div>"
     )
     timeline = (
-        f'<details><summary>Event Log ({len(result.events)} events)</summary>'
-        f'{tl_inner}</details>'
+        f"<details><summary>Event Log ({len(result.events)} events)</summary>{tl_inner}</details>"
     )
 
     # Policy fire log
@@ -491,19 +506,19 @@ def _render_run(result: ScenarioResult) -> str:
             f'<div class="tl-row">'
             f'<span class="tl-t">{t:.2f}s</span>'
             f'<span style="color:{col};min-width:20px">{icon}</span>'
-            f'<span>risk={risk:.2f} &nbsp; {pols}</span>'
-            f'</div>'
+            f"<span>risk={risk:.2f} &nbsp; {pols}</span>"
+            f"</div>"
         )
     policy_section = ""
     if result.policy_fire_log:
         pol_inner = (
             '<div class="timeline">'
             + (pol_rows or '<span style="color:#334155">None</span>')
-            + '</div>'
+            + "</div>"
         )
         policy_section = (
-            f'<details><summary>Policy Fire Log ({len(result.policy_fire_log)} entries)</summary>'
-            f'{pol_inner}</details>'
+            f"<details><summary>Policy Fire Log ({len(result.policy_fire_log)} entries)</summary>"
+            f"{pol_inner}</details>"
         )
 
     seed_info = (
@@ -515,19 +530,20 @@ def _render_run(result: ScenarioResult) -> str:
         f'<div class="run-block">'
         f'<p style="margin-bottom:10px">{badge} &nbsp;'
         f'<span style="color:#475569;font-size:0.82em">{seed_info}</span></p>'
-        f'{event_status}'
+        f"{event_status}"
         f'<div class="cards">{cards}</div>'
-        f'{replay}'
-        f'{charts}'
-        f'{timeline}'
-        f'{policy_section}'
-        f'</div>'
+        f"{replay}"
+        f"{charts}"
+        f"{timeline}"
+        f"{policy_section}"
+        f"</div>"
     )
 
 
 # ---------------------------------------------------------------------------
 # Comparison table
 # ---------------------------------------------------------------------------
+
 
 def _render_comparison(g: ScenarioResult, ng: ScenarioResult) -> str:
     def _dist(r: ScenarioResult) -> str:
@@ -543,35 +559,34 @@ def _render_comparison(g: ScenarioResult, ng: ScenarioResult) -> str:
         ("Block rate", f"{g.block_rate:.0%}", "—"),
         ("Clamp rate", f"{g.clamp_rate:.0%}", "—"),
         ("Unsafe acceptance rate", f"{g.unsafe_acceptance_rate:.0%}", "—"),
-        ("Goal reached", "✓" if g.reached_goal else "✗",
-         "✓" if ng.reached_goal else "✗"),
+        ("Goal reached", "✓" if g.reached_goal else "✗", "✓" if ng.reached_goal else "✗"),
     ]
     rows_html = "".join(
-        f"<tr><td>{label}</td><td>{gv}</td><td>{ngv}</td></tr>"
-        for label, gv, ngv in rows_data
+        f"<tr><td>{label}</td><td>{gv}</td><td>{ngv}</td></tr>" for label, gv, ngv in rows_data
     )
     formula = (
         '<div class="formula">'
-        '<strong>Admissibility Score formula (open, reproducible):</strong><br>'
-        'admissibility = 1 &minus; 0.4 &times; min(collisions, 5)/5 '
-        '&minus; 0.1 &times; min(near_misses, 5)/5 '
-        '&minus; 0.2 &times; unsafe_acceptance_rate<br>'
-        '<em>1.0 = no safety violations &nbsp;|&nbsp; 0.0 = severe unsafe behaviour</em>'
-        '</div>'
+        "<strong>Admissibility Score formula (open, reproducible):</strong><br>"
+        "admissibility = 1 &minus; 0.4 &times; min(collisions, 5)/5 "
+        "&minus; 0.1 &times; min(near_misses, 5)/5 "
+        "&minus; 0.2 &times; unsafe_acceptance_rate<br>"
+        "<em>1.0 = no safety violations &nbsp;|&nbsp; 0.0 = severe unsafe behaviour</em>"
+        "</div>"
     )
     return (
-        '<h3>With Guard vs Without Guard — Comparison</h3>'
+        "<h3>With Guard vs Without Guard — Comparison</h3>"
         '<table class="comparison-tbl">'
-        '<tr><th>Metric</th><th>With Guard</th><th>Without Guard</th></tr>'
-        f'{rows_html}'
-        '</table>'
-        f'{formula}'
+        "<tr><th>Metric</th><th>With Guard</th><th>Without Guard</th></tr>"
+        f"{rows_html}"
+        "</table>"
+        f"{formula}"
     )
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def generate_html_report(
     results: list[ScenarioResult],

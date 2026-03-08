@@ -97,4 +97,3 @@ class IsaacSimAdapter(RobotAdapter):
 
     def __exit__(self, *_: object) -> None:  # pragma: no cover - trivial
         self.close()
-

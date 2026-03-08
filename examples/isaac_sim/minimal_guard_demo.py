@@ -36,7 +36,9 @@ def main() -> int:
         print("  <your Isaac Sim python.sh> h1_bridge.py")
         return 1
     if not health.get("ready"):
-        print("WARNING: Physics not ready yet; observations may be stale. Wait for '[Bridge] Physics ready'.")
+        print(
+            "WARNING: Physics not ready yet; observations may be stale. Wait for '[Bridge] Physics ready'."
+        )
 
     robot = GuardedRobot(
         adapter=adapter,
@@ -55,9 +57,15 @@ def main() -> int:
     print(f"  Decision:       {'ALLOWED' if decision.allowed else 'BLOCKED'}")
     if decision.modified_params:
         print(f"  Modified params: {decision.modified_params}")
-    print(f"  Risk score:     {decision.risk_score.value:.2f}" if decision.risk_score else "  Risk score:     —")
+    print(
+        f"  Risk score:     {decision.risk_score.value:.2f}"
+        if decision.risk_score
+        else "  Risk score:     —"
+    )
     print(f"  Applied rules:  {decision.applied_policies or '—'}")
-    print("\nCheck the Isaac Sim window: H1 should have moved or stopped according to the decision.")
+    print(
+        "\nCheck the Isaac Sim window: H1 should have moved or stopped according to the decision."
+    )
     robot.stop()
     return 0
 

@@ -19,8 +19,8 @@ from partenit.safety_bench.eval.metrics import EvalMetrics
 from partenit.safety_bench.eval.runner import EvalReport
 
 # --- Chart dimensions ---
-_W = 420   # chart width px
-_H = 120   # timeseries chart height px
+_W = 420  # chart width px
+_H = 120  # timeseries chart height px
 _PAD = 28  # padding
 
 _GRADE_COLORS = {
@@ -73,6 +73,7 @@ details>summary:hover{color:#93c5fd;}
 # ---------------------------------------------------------------------------
 # SVG helpers (self-contained, no external deps)
 # ---------------------------------------------------------------------------
+
 
 def _svg_timeseries(
     data: list[tuple[float, float]],
@@ -147,7 +148,7 @@ def _svg_timeseries(
 
     # Event markers
     evt_marks = ""
-    for evt in (events or []):
+    for evt in events or []:
         et = evt.get("time", -1)
         if 0 <= et <= t_max:
             ec = "#ef4444" if evt.get("type") == "stop" else "#f59e0b"
@@ -160,17 +161,17 @@ def _svg_timeseries(
     return (
         f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
         f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="4"/>'
-        f'{grid}'
+        f"{grid}"
         f'<line x1="{p}" y1="{p // 2}" x2="{p}" y2="{h - p}" stroke="#2d3f55" stroke-width="1"/>'
         f'<line x1="{p}" y1="{h - p}" x2="{w - p}" y2="{h - p}" stroke="#2d3f55" stroke-width="1"/>'
-        f'{xticks}'
-        f'{thresh_line}'
-        f'{evt_marks}'
+        f"{xticks}"
+        f"{thresh_line}"
+        f"{evt_marks}"
         f'<polygon points="{clip_pts}" fill="{color}" opacity="0.12"/>'
         f'<polyline points="{line_pts}" fill="none" stroke="{color}" stroke-width="1.5"/>'
         f'<text x="{w // 2}" y="13" fill="#64748b" font-size="9" '
         f'text-anchor="middle" font-style="italic">{title}</text>'
-        f'</svg>'
+        f"</svg>"
     )
 
 
@@ -196,7 +197,7 @@ def _svg_2d_replay(
             f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
             f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="4"/>'
             f'<text x="16" y="40" fill="#475569" font-size="11">No trajectory data</text>'
-            f'</svg>'
+            f"</svg>"
         )
 
     margin = 1.5
@@ -215,7 +216,7 @@ def _svg_2d_replay(
         return x_off + (x - x_min) * scale
 
     def ty(y: float) -> float:
-        return y_off + (y_max - y) * scale   # flip Y → north=up
+        return y_off + (y_max - y) * scale  # flip Y → north=up
 
     robot_pts = " ".join(f"{tx(p[0]):.1f},{ty(p[1]):.1f}" for p in robot_trajectory)
 
@@ -261,8 +262,7 @@ def _svg_2d_replay(
                 )
             else:
                 stop_marks += (
-                    f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="4" '
-                    f'fill="#f59e0b" opacity="0.8"/>'
+                    f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="4" fill="#f59e0b" opacity="0.8"/>'
                 )
 
     rs = robot_trajectory[0] if robot_trajectory else (0.0, 0.0)
@@ -286,8 +286,8 @@ def _svg_2d_replay(
         f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">'
         f'<rect width="{w}" height="{h}" fill="#1a1f2e" rx="4"/>'
         f'<polyline points="{robot_pts}" fill="none" stroke="#3b82f6" stroke-width="2"/>'
-        f'{human_svgs}'
-        f'{stop_marks}'
+        f"{human_svgs}"
+        f"{stop_marks}"
         f'<circle cx="{tx(rs[0]):.1f}" cy="{ty(rs[1]):.1f}" r="5" fill="#93c5fd" opacity="0.5"/>'
         f'<circle cx="{tx(re[0]):.1f}" cy="{ty(re[1]):.1f}" r="7" fill="#3b82f6"/>'
         f'<circle cx="{gx:.1f}" cy="{gy:.1f}" r="9" fill="none" '
@@ -295,14 +295,15 @@ def _svg_2d_replay(
         f'<text x="{gx + 12:.1f}" y="{gy + 3:.1f}" fill="#22c55e" font-size="9">GOAL</text>'
         f'<text x="{w // 2}" y="15" fill="#64748b" font-size="9" '
         f'text-anchor="middle" font-style="italic">{title}</text>'
-        f'{legend}'
-        f'</svg>'
+        f"{legend}"
+        f"</svg>"
     )
 
 
 # ---------------------------------------------------------------------------
 # Score bars
 # ---------------------------------------------------------------------------
+
 
 def _grade_badge(grade: str) -> str:
     fg, bg = _GRADE_COLORS.get(grade, ("#94a3b8", "#1e293b"))
@@ -341,6 +342,7 @@ def _score_bars(m: EvalMetrics) -> str:
 # Comparison table
 # ---------------------------------------------------------------------------
 
+
 def _comparison_table(metrics: list[EvalMetrics]) -> str:
     def _row(label: str, vals: list[str]) -> str:
         cells = "".join(f"<td>{v}</td>" for v in vals)
@@ -370,33 +372,31 @@ def _comparison_table(metrics: list[EvalMetrics]) -> str:
         raw = [getattr(m, attr) for m in metrics]
         b = _best_idx(raw, hi)
         vals = [
-            f'<span class="{"best" if i == b else ""}">{v:.2f}</span>'
-            for i, v in enumerate(raw)
+            f'<span class="{"best" if i == b else ""}">{v:.2f}</span>' for i, v in enumerate(raw)
         ]
         rows += _row(label, vals)
 
     rows += _row("Collisions", [str(m.collision_count) for m in metrics])
     rows += _row("Near misses", [str(m.near_miss_count) for m in metrics])
     dist_vals = [
-        f"{m.min_human_distance_m:.2f} m" if m.min_human_distance_m < 999 else "—"
-        for m in metrics
+        f"{m.min_human_distance_m:.2f} m" if m.min_human_distance_m < 999 else "—" for m in metrics
     ]
     rows += _row("Min human distance", dist_vals)
-    rows += _row("Goal reached", ["Yes" if m.task_completion_rate >= 1.0 else "No" for m in metrics])
+    rows += _row(
+        "Goal reached", ["Yes" if m.task_completion_rate >= 1.0 else "No" for m in metrics]
+    )
     rows += _row("Block rate", [f"{m.block_rate:.1%}" for m in metrics])
     rows += _row("Clamp rate", [f"{m.clamp_rate:.1%}" for m in metrics])
     rows += _row("High-risk tick rate", [f"{m.high_risk_tick_rate:.1%}" for m in metrics])
     rows += _row("Unsafe acceptance", [f"{m.unsafe_acceptance_rate:.1%}" for m in metrics])
 
-    return (
-        f'<table class="cmp"><tr><th>Metric</th>{headers}</tr>'
-        f"{rows}</table>"
-    )
+    return f'<table class="cmp"><tr><th>Metric</th>{headers}</tr>{rows}</table>'
 
 
 # ---------------------------------------------------------------------------
 # Per-controller engineering detail (charts + timeline)
 # ---------------------------------------------------------------------------
+
 
 def _policy_timeline(raw_result: object) -> str:
     """Render a compact policy fire timeline."""
@@ -415,8 +415,8 @@ def _policy_timeline(raw_result: object) -> str:
         names = ", ".join(policies)
         items += (
             f'<div class="policy-fire {css_cls}">'
-            f't={t:.1f}s [{status}] {names}  risk={risk:.2f}'
-            f'</div>'
+            f"t={t:.1f}s [{status}] {names}  risk={risk:.2f}"
+            f"</div>"
         )
     return f'<div class="policy-timeline">{items}</div>'
 
@@ -436,7 +436,9 @@ def _ctrl_charts(m: EvalMetrics, raw_result: object | None) -> str:
 
     # Trajectory SVG
     traj_svg = _svg_2d_replay(
-        robot_traj, human_traj, robot_goal,
+        robot_traj,
+        human_traj,
+        robot_goal,
         events=events,
         title=f"Trajectory — {m.controller_name}",
     )
@@ -445,48 +447,58 @@ def _ctrl_charts(m: EvalMetrics, raw_result: object | None) -> str:
     max_dist = max((v for _, v in distance_curve), default=10.0)
     max_speed = max((v for _, v in speed_curve), default=2.0) * 1.2 or 2.0
     chart_dist = _svg_timeseries(
-        distance_curve, "#f87171", "Distance to human (m)",
-        y_max=max_dist, events=events, threshold_y=1.5,
+        distance_curve,
+        "#f87171",
+        "Distance to human (m)",
+        y_max=max_dist,
+        events=events,
+        threshold_y=1.5,
     )
     chart_speed = _svg_timeseries(
-        speed_curve, "#60a5fa", "Speed (m/s)",
-        y_max=max_speed, events=events,
+        speed_curve,
+        "#60a5fa",
+        "Speed (m/s)",
+        y_max=max_speed,
+        events=events,
     )
     chart_risk = _svg_timeseries(
-        risk_curve, "#a78bfa", "Risk score",
-        y_max=1.0, events=events, threshold_y=0.7,
+        risk_curve,
+        "#a78bfa",
+        "Risk score",
+        y_max=1.0,
+        events=events,
+        threshold_y=0.7,
     )
 
     timeline_html = ""
     if getattr(raw_result, "policy_fire_log", []):
         timeline_html = (
-            f"<details><summary>Policy fire log</summary>"
-            f"{_policy_timeline(raw_result)}"
-            f"</details>"
+            f"<details><summary>Policy fire log</summary>{_policy_timeline(raw_result)}</details>"
         )
 
     return (
         f'<div class="ctrl-section">'
         f'<div class="ctrl-label">{_grade_badge(m.grade)} {m.controller_name}'
         f'  <span style="font-size:.75rem;color:#94a3b8">'
-        f'collisions={m.collision_count}  near-miss={m.near_miss_count}'
-        f'  min-dist={m.min_human_distance_m:.2f}m'
-        f'  high-risk={m.high_risk_tick_rate:.1%}'
-        f'</span></div>'
+        f"collisions={m.collision_count}  near-miss={m.near_miss_count}"
+        f"  min-dist={m.min_human_distance_m:.2f}m"
+        f"  high-risk={m.high_risk_tick_rate:.1%}"
+        f"</span></div>"
         f'<div class="charts-grid">'
         f'<div class="chart-cell">{traj_svg}</div>'
         f'<div class="chart-cell">{chart_dist}</div>'
         f'<div class="chart-cell">{chart_speed}</div>'
         f'<div class="chart-cell">{chart_risk}</div>'
-        f'</div>'
-        f'{timeline_html}'
-        f'</div>'
+        f"</div>"
+        f"{timeline_html}"
+        f"</div>"
     )
 
 
 # ---------------------------------------------------------------------------
 # Scenario section
 # ---------------------------------------------------------------------------
+
 
 def _render_scenario(
     scenario_id: str,
@@ -540,6 +552,7 @@ def _render_scenario(
 # Public entry point
 # ---------------------------------------------------------------------------
 
+
 def generate_eval_html(report: EvalReport, title: str = "Partenit Eval Report") -> str:
     """
     Generate a standalone HTML evaluation report with charts.
@@ -557,9 +570,7 @@ def generate_eval_html(report: EvalReport, title: str = "Partenit Eval Report") 
     for scenario_id in report.scenarios:
         metrics = [m for m in report.metrics if m.scenario_id == scenario_id]
         if metrics:
-            scenario_sections += _render_scenario(
-                scenario_id, metrics, report.raw_results
-            )
+            scenario_sections += _render_scenario(scenario_id, metrics, report.raw_results)
 
     if not scenario_sections:
         scenario_sections = "<p style='color:#94a3b8'>No results to display.</p>"

@@ -142,9 +142,7 @@ class AgentGuard:
         if eval_result.has_violations:
             allowed = False
             blocking_rules = [r for r in eval_result.fired_rules if r.action.type == "block"]
-            rejection_reason = "; ".join(
-                f"{r.rule_id}: {r.name}" for r in blocking_rules
-            )
+            rejection_reason = "; ".join(f"{r.rule_id}: {r.name}" for r in blocking_rules)
             self._emit_event(
                 SafetyEventType.LLM_BLOCKED,
                 triggered_by=blocking_rules[0].rule_id if blocking_rules else "policy",

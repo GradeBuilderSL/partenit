@@ -63,9 +63,7 @@ class ConflictDetector:
 
         return conflicts
 
-    def _check_pair(
-        self, rule_a: PolicyRule, rule_b: PolicyRule
-    ) -> PolicyConflict | None:
+    def _check_pair(self, rule_a: PolicyRule, rule_b: PolicyRule) -> PolicyConflict | None:
         """Check a pair of rules for conflict."""
         # Both rules fire on the same metric
         metric_a = rule_a.condition.metric
@@ -100,8 +98,7 @@ class ConflictDetector:
                 rule_a=rule_a,
                 rule_b=rule_b,
                 reason=(
-                    f"Conflicting actions on metric '{metric_a}': "
-                    f"one blocks, the other modifies"
+                    f"Conflicting actions on metric '{metric_a}': one blocks, the other modifies"
                 ),
             )
 

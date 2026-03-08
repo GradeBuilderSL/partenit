@@ -77,9 +77,7 @@ def main() -> None:
         while time.time() < deadline:
             time.sleep(2.0)
             try:
-                with urllib.request.urlopen(
-                    f"{BRIDGE_URL}/partenit/health", timeout=3
-                ) as resp:
+                with urllib.request.urlopen(f"{BRIDGE_URL}/partenit/health", timeout=3) as resp:
                     data = json.loads(resp.read())
                     if data.get("ready"):
                         ready = True
@@ -96,8 +94,10 @@ def main() -> None:
     obs = adapter.get_observations()
     print(f"  observations: {len(obs)} объект(ов)")
     for o in obs:
-        print(f"    class={o.class_best}  dist={o.distance():.2f}m  "
-              f"pos_3d={tuple(round(v, 2) for v in o.position_3d)}")
+        print(
+            f"    class={o.class_best}  dist={o.distance():.2f}m  "
+            f"pos_3d={tuple(round(v, 2) for v in o.position_3d)}"
+        )
     print("  ✓ OK")
 
     # ──────────────────────────────────────────────────────────
@@ -115,7 +115,7 @@ def main() -> None:
     print(f"  Политики: {POLICY_PATH}\n")
     hdr = f"  {'speed':>5}  {'dist':>5}  {'result':>10}  {'final':>5}  {'risk':>5}  policies"
     print(hdr)
-    print(f"  {'─'*5}  {'─'*5}  {'─'*10}  {'─'*5}  {'─'*5}  {'─'*16}")
+    print(f"  {'─' * 5}  {'─' * 5}  {'─' * 10}  {'─' * 5}  {'─' * 5}  {'─' * 16}")
 
     for requested_speed in [0.3, 0.6, 1.0, 1.5, 2.0]:
         d = robot.navigate_to(zone="forward", speed=requested_speed)
@@ -135,8 +135,10 @@ def main() -> None:
             final = requested_speed
 
         policies = ", ".join(d.applied_policies) if d.applied_policies else "—"
-        print(f"  {requested_speed:>5.1f}  {dist:>5.2f}  {result:>10}"
-              f"  {final:>5.1f}  {risk:>5.2f}  {policies}")
+        print(
+            f"  {requested_speed:>5.1f}  {dist:>5.2f}  {result:>10}"
+            f"  {final:>5.1f}  {risk:>5.2f}  {policies}"
+        )
         time.sleep(2.5)  # give H1 time to move noticeably between steps
 
     robot.stop()
@@ -152,7 +154,7 @@ def main() -> None:
         SCENARIO,
         controllers=[
             ControllerConfig("baseline", policy_paths=[]),
-            ControllerConfig("guarded",  policy_paths=[POLICY_PATH]),
+            ControllerConfig("guarded", policy_paths=[POLICY_PATH]),
         ],
     )
 
@@ -182,13 +184,20 @@ def main() -> None:
     # ──────────────────────────────────────────────────────────
     step(5, "partenit-policy sim — правила при distance=1.0 м, speed=2.0")
 
-    subprocess.run([
-        "partenit-policy", "sim",
-        "--action", "navigate_to",
-        "--speed", "2.0",
-        "--human-distance", "1.0",
-        "--policy-path", POLICY_PATH,
-    ])
+    subprocess.run(
+        [
+            "partenit-policy",
+            "sim",
+            "--action",
+            "navigate_to",
+            "--speed",
+            "2.0",
+            "--human-distance",
+            "1.0",
+            "--policy-path",
+            POLICY_PATH,
+        ]
+    )
     print("  ✓ OK")
 
     # ──────────────────────────────────────────────────────────

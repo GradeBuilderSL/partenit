@@ -22,6 +22,7 @@ Architecture intent:
         ↓
     Open-RMF execution layer
 """
+
 from __future__ import annotations
 
 from partenit.adapters.base import RobotAdapter

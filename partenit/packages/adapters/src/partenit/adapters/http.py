@@ -22,6 +22,7 @@ from partenit.core.models import GuardDecision, StructuredObservation
 
 try:
     import httpx
+
     _HTTPX_AVAILABLE = True
 except ImportError:
     _HTTPX_AVAILABLE = False
@@ -35,9 +36,9 @@ logger = logging.getLogger(__name__)
 
 
 class CircuitState(StrEnum):
-    CLOSED = "closed"       # Normal — all calls pass through
-    OPEN = "open"           # Too many failures — calls rejected immediately
-    HALF_OPEN = "half_open" # Cooldown elapsed — one probe call allowed
+    CLOSED = "closed"  # Normal — all calls pass through
+    OPEN = "open"  # Too many failures — calls rejected immediately
+    HALF_OPEN = "half_open"  # Cooldown elapsed — one probe call allowed
 
 
 class CircuitBreaker:

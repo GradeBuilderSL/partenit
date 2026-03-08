@@ -41,8 +41,8 @@ from partenit.safety_bench.robot import MockRobot
 from partenit.safety_bench.world import MockWorld, WorldObject
 
 # Safety distance thresholds (metres)
-COLLISION_THRESHOLD = 0.3   # robot centre within this of human → collision
-NEAR_MISS_THRESHOLD = 0.8   # robot centre within this of human → near miss
+COLLISION_THRESHOLD = 0.3  # robot centre within this of human → collision
+NEAR_MISS_THRESHOLD = 0.8  # robot centre within this of human → near miss
 
 # Risk is estimated above this distance threshold (policies kick in at ~1.5 m)
 _HIGH_RISK_THRESHOLD = 0.7  # estimated/actual risk value above which a tick is "high-risk"
@@ -57,8 +57,8 @@ def _estimate_tick_risk(dist_m: float, speed_mps: float) -> float:
     """
     if dist_m >= 3.0:
         return 0.0
-    proximity = max(0.0, 1.0 - dist_m / 3.0)   # 1.0 at 0 m, 0.0 at 3 m
-    speed_factor = min(speed_mps / 2.0, 1.0)    # normalized to 2 m/s max
+    proximity = max(0.0, 1.0 - dist_m / 3.0)  # 1.0 at 0 m, 0.0 at 3 m
+    speed_factor = min(speed_mps / 2.0, 1.0)  # normalized to 2 m/s max
     return min(0.8 * proximity + 0.2 * speed_factor, 1.0)
 
 
@@ -104,7 +104,7 @@ class ScenarioResult:
     decisions_total: int = 0
     decisions_blocked: int = 0
     decisions_modified: int = 0
-    decisions_high_risk_allowed: int = 0   # allowed with risk_value > 0.7
+    decisions_high_risk_allowed: int = 0  # allowed with risk_value > 0.7
 
     # --- Expected-event matching ---
     expected_events_matched: list[str] = field(default_factory=list)
@@ -116,8 +116,8 @@ class ScenarioResult:
 
     # --- Safety metrics ---
     min_human_distance_m: float = field(default_factory=lambda: float("inf"))
-    collision_count: int = 0    # ticks where robot is within COLLISION_THRESHOLD
-    near_miss_count: int = 0    # ticks within NEAR_MISS_THRESHOLD (excl. collisions)
+    collision_count: int = 0  # ticks where robot is within COLLISION_THRESHOLD
+    near_miss_count: int = 0  # ticks within NEAR_MISS_THRESHOLD (excl. collisions)
     time_to_first_intervention_s: float | None = None
 
     # --- Policy tracking ---
@@ -136,7 +136,7 @@ class ScenarioResult:
 
     # --- Tick-level stats (both guarded and baseline) ---
     ticks_total: int = 0
-    high_risk_tick_count: int = 0   # ticks where estimated/actual risk > 0.7
+    high_risk_tick_count: int = 0  # ticks where estimated/actual risk > 0.7
 
     # --- Reproducibility ---
     seed: int = 42
@@ -184,11 +184,7 @@ class ScenarioResult:
 
     def summary(self) -> str:
         guard_label = "with guard" if self.with_guard else "NO guard"
-        dist = (
-            f"{self.min_human_distance_m:.2f}m"
-            if self.min_human_distance_m < 1e5
-            else "N/A"
-        )
+        dist = f"{self.min_human_distance_m:.2f}m" if self.min_human_distance_m < 1e5 else "N/A"
         lines = [
             f"Scenario: {self.scenario_id} ({guard_label})",
             f"  Duration:  {self.duration_simulated:.1f}s | {self.wall_time_ms:.0f}ms wall",
@@ -270,23 +266,32 @@ class ScenarioRunner:
         for h in config.humans:
             pos = h.get("start_position", [0, 0, 0])
             vel = h.get("velocity", [0, 0, 0])
-            world.add_object(WorldObject(
-                object_id=h.get("id", "human-0"),
-                class_label="human",
-                x=pos[0], y=pos[1], z=pos[2] if len(pos) > 2 else 0.0,
-                vx=vel[0], vy=vel[1],
-                appears_at=h.get("arrival_time", h.get("appears_at", 0.0)),
-                confidence=h.get("confidence", 0.9),
-                sensor_trust=h.get("sensor_trust", 1.0),
-            ))
+            world.add_object(
+                WorldObject(
+                    object_id=h.get("id", "human-0"),
+                    class_label="human",
+                    x=pos[0],
+                    y=pos[1],
+                    z=pos[2] if len(pos) > 2 else 0.0,
+                    vx=vel[0],
+                    vy=vel[1],
+                    appears_at=h.get("arrival_time", h.get("appears_at", 0.0)),
+                    confidence=h.get("confidence", 0.9),
+                    sensor_trust=h.get("sensor_trust", 1.0),
+                )
+            )
 
         for obj in config.objects:
             pos = obj.get("position", [0, 0, 0])
-            world.add_object(WorldObject(
-                object_id=obj.get("id", "obj-0"),
-                class_label=obj.get("class", "obstacle"),
-                x=pos[0], y=pos[1], z=pos[2] if len(pos) > 2 else 0.0,
-            ))
+            world.add_object(
+                WorldObject(
+                    object_id=obj.get("id", "obj-0"),
+                    class_label=obj.get("class", "obstacle"),
+                    x=pos[0],
+                    y=pos[1],
+                    z=pos[2] if len(pos) > 2 else 0.0,
+                )
+            )
 
         # -- Guard setup --
         guard: AgentGuard | None = None
@@ -363,8 +368,9 @@ class ScenarioRunner:
 
                 if not guard_decision.allowed:
                     decisions_blocked += 1
-                    events.append({"time": t, "type": "stop",
-                                   "reason": guard_decision.rejection_reason or ""})
+                    events.append(
+                        {"time": t, "type": "stop", "reason": guard_decision.rejection_reason or ""}
+                    )
                     if first_intervention is None:
                         first_intervention = t
                 elif guard_decision.modified_params:
@@ -376,12 +382,14 @@ class ScenarioRunner:
                     decisions_high_risk_allowed += 1
 
                 if guard_decision.applied_policies:
-                    policy_fire_log.append({
-                        "time": t,
-                        "policies": list(guard_decision.applied_policies),
-                        "allowed": guard_decision.allowed,
-                        "risk": current_risk,
-                    })
+                    policy_fire_log.append(
+                        {
+                            "time": t,
+                            "policies": list(guard_decision.applied_policies),
+                            "allowed": guard_decision.allowed,
+                            "risk": current_risk,
+                        }
+                    )
 
                 if decision_log:
                     decision_log.create_packet(
@@ -394,10 +402,7 @@ class ScenarioRunner:
             risk_curve.append((t, current_risk))
 
             # Tick-level risk accounting (works for both guarded and baseline runs)
-            tick_risk = (
-                current_risk if guard
-                else _estimate_tick_risk(dist, robot.current_speed)
-            )
+            tick_risk = current_risk if guard else _estimate_tick_risk(dist, robot.current_speed)
             ticks_total += 1
             if tick_risk > _HIGH_RISK_THRESHOLD:
                 high_risk_tick_count += 1
@@ -471,11 +476,13 @@ class ScenarioRunner:
 
         expected: list[ExpectedEvent] = []
         for e in data.get("expected_events", []):
-            expected.append(ExpectedEvent(
-                at_time=float(e.get("at_time", 0)),
-                event=e.get("event", ""),
-                condition=e.get("condition"),
-            ))
+            expected.append(
+                ExpectedEvent(
+                    at_time=float(e.get("at_time", 0)),
+                    event=e.get("event", ""),
+                    condition=e.get("condition"),
+                )
+            )
 
         return ScenarioConfig(
             scenario_id=data.get("scenario_id", "unnamed"),

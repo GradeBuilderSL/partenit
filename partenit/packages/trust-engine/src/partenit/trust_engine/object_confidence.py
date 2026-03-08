@@ -16,12 +16,12 @@ import math
 from datetime import UTC, datetime
 
 _DEFAULT_LAMBDAS: dict[str, float] = {
-    "human": 0.5,        # Humans move — decay fast (half-life ~2s)
+    "human": 0.5,  # Humans move — decay fast (half-life ~2s)
     "person": 0.5,
-    "robot": 0.2,        # Robots are slower
+    "robot": 0.2,  # Robots are slower
     "forklift": 0.15,
     "vehicle": 0.15,
-    "obstacle": 0.05,    # Static obstacles decay slowly
+    "obstacle": 0.05,  # Static obstacles decay slowly
     "box": 0.03,
     "shelf": 0.01,
     "wall": 0.005,
@@ -135,8 +135,7 @@ class ObjectConfidenceModel:
         Returns list of pruned object_ids.
         """
         stale = [
-            oid for oid, obj in self._objects.items()
-            if obj.seconds_since_seen > max_age_seconds
+            oid for oid, obj in self._objects.items() if obj.seconds_since_seen > max_age_seconds
         ]
         for oid in stale:
             del self._objects[oid]
