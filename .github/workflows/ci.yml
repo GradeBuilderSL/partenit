@@ -30,8 +30,8 @@ jobs:
           pip install -e "partenit/packages/trust-engine"
           pip install -e "partenit/packages/agent-guard"
           pip install -e "partenit/packages/adapters[http]"
-          pip install -e "partenit/packages/safety-bench"
           pip install -e "partenit/packages/decision-log"
+          pip install -e "partenit/packages/safety-bench"
           pip install -e "analyzer/backend"
           pip install pytest respx httpx
 
