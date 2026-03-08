@@ -23,27 +23,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-
-      - name: Create virtual environment
-        run: uv venv .venv
-
       - name: Install dependencies
         run: |
-          uv pip install -e "partenit/packages/core"
-          uv pip install -e "partenit/packages/policy-dsl"
-          uv pip install -e "partenit/packages/trust-engine"
-          uv pip install -e "partenit/packages/agent-guard"
-          uv pip install -e "partenit/packages/adapters[http]"
-          uv pip install -e "partenit/packages/safety-bench"
-          uv pip install -e "partenit/packages/decision-log"
-          uv pip install -e "analyzer/backend"
-          uv pip install pytest respx httpx
+          pip install -e "partenit/packages/core"
+          pip install -e "partenit/packages/policy-dsl"
+          pip install -e "partenit/packages/trust-engine"
+          pip install -e "partenit/packages/agent-guard"
+          pip install -e "partenit/packages/adapters[http]"
+          pip install -e "partenit/packages/safety-bench"
+          pip install -e "partenit/packages/decision-log"
+          pip install -e "analyzer/backend"
+          pip install pytest respx httpx
 
       - name: Run tests
         run: |
-          .venv/bin/python -m pytest partenit/ tests/ analyzer/backend/tests/ -q --tb=short
+          python -m pytest partenit/ tests/ analyzer/backend/tests/ -q --tb=short
 
   lint:
     name: Lint
