@@ -25,24 +25,25 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
+
+      - name: Create virtual environment
+        run: uv venv .venv
 
       - name: Install dependencies
         run: |
-          uv pip install --system -e "partenit/packages/core"
-          uv pip install --system -e "partenit/packages/policy-dsl"
-          uv pip install --system -e "partenit/packages/trust-engine"
-          uv pip install --system -e "partenit/packages/agent-guard"
-          uv pip install --system -e "partenit/packages/adapters[http]"
-          uv pip install --system -e "partenit/packages/safety-bench"
-          uv pip install --system -e "partenit/packages/decision-log"
-          uv pip install --system -e "analyzer/backend"
-          uv pip install --system pytest pytest-anyio respx httpx
+          uv pip install -e "partenit/packages/core"
+          uv pip install -e "partenit/packages/policy-dsl"
+          uv pip install -e "partenit/packages/trust-engine"
+          uv pip install -e "partenit/packages/agent-guard"
+          uv pip install -e "partenit/packages/adapters[http]"
+          uv pip install -e "partenit/packages/safety-bench"
+          uv pip install -e "partenit/packages/decision-log"
+          uv pip install -e "analyzer/backend"
+          uv pip install pytest respx httpx
 
       - name: Run tests
         run: |
-          python -m pytest partenit/ tests/ analyzer/backend/tests/ -q --tb=short
+          .venv/bin/python -m pytest partenit/ tests/ analyzer/backend/tests/ -q --tb=short
 
   lint:
     name: Lint
