@@ -222,6 +222,7 @@ Your Planner / LLM
 
 - [Writing policies](guides/writing-policies.md) — full YAML reference for safety engineers
 - [Simulation guide](guides/simulation.md) — using MockRobot and built-in scenarios
+- [Isaac Sim guide](guides/isaac-sim.md) — **verify your controller in simulation**: same guard, logs, and grades with the H1 bridge
 - [ROS2 integration](guides/ros2-robot.md) — plug into a real robot
 - [LLM agent guard](guides/llm-agent.md) — intercept tool calls from Claude, GPT, etc.
 - [Custom robot (HTTP)](guides/custom-robot.md) — any robot with a REST API

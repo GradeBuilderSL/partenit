@@ -28,13 +28,11 @@ def _cmd_run(args: argparse.Namespace) -> int:
         # Also add baseline (no guard)
         controllers.insert(0, ControllerConfig(name="baseline", policy_paths=[]))
     else:
-        # Default: baseline vs guarded (using scenario's own policies)
+        # Default: baseline (no guard) vs guarded (scenario's policies from YAML)
         controllers = [
             ControllerConfig("baseline", policy_paths=[]),
-            ControllerConfig("guarded", policy_paths=[]),  # will use scenario policies
+            ControllerConfig("guarded", policy_paths=[]),  # EvalRunner uses scenario policy_paths
         ]
-        # For guarded: use scenario's own policies (ScenarioRunner will load them)
-        # We signal this by passing with_guard=True which is the default
 
     runner = EvalRunner()
     try:

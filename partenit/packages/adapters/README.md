@@ -22,6 +22,7 @@ Planned components:
 - `ROS2Adapter` — optional adapter for ROS2 robots (graceful ImportError if `rclpy` is missing).
 - `IsaacSimAdapter` — simulation adapter that wraps `HTTPRobotAdapter` to connect to an
   Isaac Sim HTTP gateway implementing the standard Partenit robot API.
+- `MoveItAdapter` / `OpenRMFAdapter` — *planned* (stubs only; use HTTP or ROS2 for now).
 
 The vendor HTTP contract will be specified in:
 - `schemas/robot-adapter-api.yaml`
@@ -35,7 +36,7 @@ from pathlib import Path
 from partenit.adapters.isaac_sim import IsaacSimAdapter
 from partenit.agent_guard import AgentGuard
 
-adapter = IsaacSimAdapter(base_url="http://localhost:7000", robot_id="isaac-sim-demo")
+adapter = IsaacSimAdapter(base_url="http://localhost:8000", robot_id="isaac-sim-demo")
 
 guard = AgentGuard()
 guard.load_policies(Path("examples/warehouse/policies.yaml"))

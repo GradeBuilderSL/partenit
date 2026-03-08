@@ -71,6 +71,94 @@ class SharedState:
 
 state = SharedState()
 
+_STATUS_PAGE_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="2">
+<title>Partenit H1 Bridge</title>
+<style>
+  body{font-family:monospace;background:#111;color:#eee;padding:24px;max-width:700px}
+  h1{color:#76b900;margin:0 0 4px}
+  .sub{color:#888;margin:0 0 24px;font-size:13px}
+  .card{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:16px;margin-bottom:16px}
+  .label{color:#888;font-size:12px;text-transform:uppercase;margin-bottom:6px}
+  .val{font-size:18px;font-weight:bold}
+  .ok{color:#76b900} .warn{color:#f90} .err{color:#f44}
+  .row{display:flex;gap:32px;flex-wrap:wrap}
+  .metric{min-width:140px}
+  .endpoints{font-size:13px;line-height:1.8;color:#aaa}
+  a{color:#76b900}
+</style>
+</head>
+<body>
+<h1>Partenit H1 Bridge</h1>
+<p class="sub">Auto-refreshes every 2 seconds &nbsp;|&nbsp;
+  <a href="/partenit/health">health</a> &nbsp;
+  <a href="/partenit/observations">observations</a> &nbsp;
+  <a href="/robot/state">robot state</a>
+</p>
+<div id="content">Loading...</div>
+<script>
+async function load() {
+  const [h, obs, rs] = await Promise.all([
+    fetch('/partenit/health').then(r=>r.json()).catch(()=>({})),
+    fetch('/partenit/observations').then(r=>r.json()).catch(()=>[]),
+    fetch('/robot/state').then(r=>r.json()).catch(()=>({})),
+  ]);
+  const ready = h.ready;
+  const pos = rs.position || {x:0,y:0,z:0};
+  const human = obs[0] || null;
+  const dist = human ? Math.sqrt(
+    Math.pow(human.position_3d[0],2)+Math.pow(human.position_3d[1],2)
+  ).toFixed(2) : '—';
+  const distColor = !human ? '' : dist>1.5?'ok':dist>0.8?'warn':'err';
+  document.getElementById('content').innerHTML = `
+  <div class="card">
+    <div class="label">Bridge status</div>
+    <div class="row">
+      <div class="metric"><div class="label">Physics</div>
+        <div class="val ${ready?'ok':'warn'}">${ready?'READY':'LOADING...'}</div></div>
+      <div class="metric"><div class="label">Robot ID</div>
+        <div class="val">${h.robot_id||'—'}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">H1 position (world)</div>
+    <div class="row">
+      <div class="metric"><div class="label">X</div><div class="val">${pos.x?.toFixed(2)||'—'} m</div></div>
+      <div class="metric"><div class="label">Y</div><div class="val">${pos.y?.toFixed(2)||'—'} m</div></div>
+      <div class="metric"><div class="label">Heading</div>
+        <div class="val">${rs.heading_rad!=null?(rs.heading_rad*57.3).toFixed(1)+'°':'—'}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Human observation</div>
+    <div class="row">
+      <div class="metric"><div class="label">Distance</div>
+        <div class="val ${distColor}">${dist} m</div></div>
+      <div class="metric"><div class="label">Class</div>
+        <div class="val">${human?human.class_best:'—'}</div></div>
+      <div class="metric"><div class="label">Confidence</div>
+        <div class="val">${human?(human.confidence*100).toFixed(0)+'%':'—'}</div></div>
+    </div>
+  </div>
+  <div class="card endpoints">
+    <div class="label">REST endpoints</div>
+    GET &nbsp;<a href="/partenit/health">/partenit/health</a><br>
+    GET &nbsp;<a href="/partenit/observations">/partenit/observations</a><br>
+    POST /partenit/command &nbsp;← GuardDecision JSON<br>
+    GET &nbsp;<a href="/robot/state">/robot/state</a><br>
+    POST /control/move &nbsp;← {"vx":0.5,"vy":0,"wz":0}<br>
+    POST /control/stop<br>
+    GET &nbsp;<a href="/camera/latest">/camera/latest</a> &nbsp;← PNG
+  </div>`;
+}
+load();
+</script>
+</body>
+</html>"""
+
 
 class BridgeHandler(BaseHTTPRequestHandler):
 
@@ -204,11 +292,22 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 "source_id": "isaac_sim_perception",
             }])
 
+        elif self.path in ("/", "/status"):
+            self._send_html(_STATUS_PAGE_HTML)
+
         else:
             self.send_response(404)
             self.end_headers()
 
     # ------------------------------------------------------------------
+    def _send_html(self, html: str):
+        body = html.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def _send_json(self, data):
         body = json.dumps(data).encode("utf-8")
         self.send_response(200)
@@ -439,6 +538,8 @@ def main():
             h1_policy.post_reset()
             if hasattr(h1_policy, "robot") and hasattr(h1_policy, "default_pos"):
                 h1_policy.robot.set_joints_default_state(h1_policy.default_pos)
+            with state.cmd_lock:
+                state.cmd_vel[:] = [0.0, 0.0, 0.0]  # clear any stale commands from loading
 
             cam_path = create_h1_camera_prim(stage)
             wrapper = CameraWrapper(prim_path=cam_path)
@@ -543,7 +644,7 @@ def main():
                 if img is not None:
                     state.camera_bytes = cam_wrapper.process_image_for_vlm(img)
 
-    input_interface.unsubscribe_from_keyboard_events(keyboard_sub)
+    input_interface.unsubscribe_to_keyboard_events(keyboard, keyboard_sub)
     simulation_app.close()
 
 

@@ -1,91 +1,95 @@
 # Partenit × Isaac Sim — H1 Safety Demo
 
-Run the full Partenit safety stack on a **Unitree H1** humanoid robot inside
-**NVIDIA Isaac Sim** — with a real physics simulation, a live Omniverse UI panel,
-and automatic grading (A–F) of your safety controller.
+This example shows how to use **Partenit tools** with a robot in **NVIDIA Isaac Sim**: safety guard in the loop, decision logging, safety grading (A–F), and policy tuning — so you can test and debug safety before moving to real hardware.
 
-## What you get
+---
 
-| Component | What it does |
-|-----------|-------------|
-| `h1_bridge.py` | Runs inside Isaac Sim — loads warehouse scene, H1 robot, human mannequin. Exposes HTTP API on port 8000. |
-| `sim_frontend.py` | Omniverse UI panel: chat, scenario buttons, enable/disable brain. |
-| `sim_camera.py` | H1 head camera capture (PNG → VLM-ready bytes). |
-| `env_loader.py` | Loads `.env` settings (camera params, API keys). |
-| `../../examples/test_h1_isaac.py` | Test runner: connects Partenit tools to the live bridge. |
+## For robot developers: what you get
 
-## Prerequisites
+| Partenit tool | What it does in this demo | When to use it |
+|---------------|---------------------------|----------------|
+| **GuardedRobot** | Every `navigate_to` goes through the guard; H1 gets allowed speed, clamped speed, or stop. | Add safety in the loop in sim or on the real robot. |
+| **partenit-log replay** | Timeline of decisions (allowed / modified / blocked) in the terminal and as HTML. | After a run: “Why did it stop?” or share a run. |
+| **partenit-eval** | Runs a scenario with and without guard; outputs grade A–F and report. | Answer “Is my controller safe?” or compare policies. |
+| **partenit-policy sim** | For a given distance/speed, shows which rules fire and the result. | Tune policy thresholds without running the sim. |
 
-- NVIDIA Isaac Sim 4.x or 5.x installed and licensed
-- Isaac Sim Python environment activated (the one that ships with Isaac Sim)
-- `pip install partenit-core partenit-agent-guard partenit-safety-bench partenit-adapters` inside that environment
+Full guide: [docs/guides/isaac-sim.md](../../docs/guides/isaac-sim.md).
 
-## Run order
+---
 
-**Terminal 1 — start Isaac Sim with the bridge:**
+## Quick start (two terminals)
+
+### Terminal 1 — start the bridge in Isaac Sim
+
+Use the **Python that ships with Isaac Sim** (not system Python). Example for a source build:
 
 ```bash
 cd examples/isaac_sim/
-python h1_bridge.py
+# Replace with your Isaac Sim Python, e.g.:
+#   .../isaacsim/_build/linux-x86_64/release/python.sh
+#   or set ISAAC_SIM_PYTHON
+python.sh h1_bridge.py
 ```
 
-Wait for:
+Wait until you see:
+
 ```
 Bridge API  : http://0.0.0.0:8000
-Partenit API: http://0.0.0.0:8000/partenit/{health,observations,command}
-[Bridge] Warehouse: .../Simple_Warehouse/full_warehouse.usd
-[Bridge] Human at world (3.5, 0.0, 0.0)
-[Bridge] GUI ready
-[Bridge] Arrow keys — manual control | Partenit API — autonomous guard
+[Bridge] Physics ready — Partenit API accepting commands
 ```
 
-**Terminal 2 — run the Partenit test suite:**
+### Terminal 2 — run Partenit (from repo root)
+
+**Minimal (one guarded command, see decision in console):**
+
+```bash
+python examples/isaac_sim/minimal_guard_demo.py
+```
+
+**Full demo (health check, GuardedRobot steps, eval, log replay, policy sim):**
 
 ```bash
 python examples/test_h1_isaac.py
 ```
 
-This runs 5 steps automatically:
-1. Health check — verifies the bridge is reachable
-2. GuardedRobot — sends H1 toward the human with increasing speed; watch clamp/block
-3. partenit-eval — grades baseline vs guarded (A–F) with SVG report
-4. partenit-log replay — prints decision timeline in the terminal
-5. partenit-policy sim — shows which policies fired at distance 1.0 m
+Keep Isaac Sim running until the script finishes.
 
-## Manual keyboard control
+---
 
-While the bridge is running, the Isaac Sim window accepts keyboard input:
+## What we're doing and why
 
-| Key | Action |
-|-----|--------|
-| ↑ | Forward 0.75 m/s |
-| ↓ | Backward 0.5 m/s |
-| ← | Rotate left |
-| → | Rotate right |
-| Esc | Stop |
+- Every decision (allow / clamp / block) is **sent to the bridge**. When the guard blocks (e.g. human too close), the bridge sets robot velocity to **zero** so the H1 stops.
+- **Goal:** Show that Partenit in the loop keeps the robot safe: clamp speed when the human is near, full stop when too close; all decisions are logged and visible.
 
-## Bridge HTTP API
+---
 
-```bash
-# Check bridge is up
-curl http://localhost:8000/partenit/health
+## Components in this folder
 
-# Get human position relative to H1
-curl http://localhost:8000/partenit/observations
+| File | Role |
+|------|------|
+| `h1_bridge.py` | Runs inside Isaac Sim — warehouse scene, H1, human; HTTP API on port 8000. |
+| `minimal_guard_demo.py` | One-shot: one `navigate_to`, print decision; run from repo root. |
+| `sim_frontend.py` | Omniverse UI panel (chat, scenarios). |
+| `sim_camera.py` | H1 head camera capture. |
+| `env_loader.py` | Loads `.env` (camera, API keys). |
 
-# Get H1 state (position, velocity, heading)
-curl http://localhost:8000/robot/state
+The full test runner is `../../test_h1_isaac.py` (from repo root).
 
-# Move H1 manually
-curl -X POST http://localhost:8000/control/move \
-     -H "Content-Type: application/json" \
-     -d '{"vx": 0.5, "vy": 0.0, "wz": 0.0}'
+---
 
-# Stop
-curl -X POST http://localhost:8000/control/stop
-```
+## Prerequisites
 
-## Connect from your own code
+- NVIDIA Isaac Sim 4.x or 5.x
+- Isaac Sim Python for running `h1_bridge.py`
+- In your **local** env (for Terminal 2):  
+  `pip install partenit-core partenit-agent-guard partenit-safety-bench partenit-adapters`
+
+---
+
+## Scene and policies
+
+- **Scene:** H1 at (0, 0), human at (3.5, 0). Guard: distance &lt; 1.5 m → speed clamped to 0.3 m/s; &lt; 0.8 m → block.
+- **Use in your code:** Same as with Mock or ROS2 — only the adapter changes:
 
 ```python
 from partenit.adapters.isaac_sim import IsaacSimAdapter
@@ -97,44 +101,26 @@ robot = GuardedRobot(
     policy_path="examples/warehouse/policies.yaml",
     session_name="my_run",
 )
-
 decision = robot.navigate_to(zone="forward", speed=2.0)
-print(decision.allowed)           # False — guard blocked (human too close)
-print(decision.risk_score.value)  # 0.91
-print(decision.applied_policies)  # ['emergency_stop_human']
+robot.stop()
 ```
 
-## Scene layout
+---
 
-```
-          Human (3.5, 0)
-              🧍
-              │  ← 3.5 m
-             ═╪═══════════════ H1 start (0, 0)
-                               🤖
-```
+## Manual control and API
 
-The guard fires at:
-- **distance < 1.5 m** → speed clamped to 0.3 m/s (`human_proximity_slowdown`)
-- **distance < 0.8 m** → fully blocked (`emergency_stop_human`)
+While the bridge is running, the Isaac Sim window accepts:
 
-## Expected output (step 2)
+| Key | Action |
+|-----|--------|
+| ↑ / ↓ / ← / → | Move H1 |
+| Esc | Stop |
 
-```
-  speed   dist      result  final   risk  policies
-  ─────  ─────  ──────────  ─────  ─────  ────────────────
-    0.3   3.50      allowed    0.3   0.10  —
-    0.6   3.50      allowed    0.6   0.18  —
-    1.0   3.50      allowed    1.0   0.24  —
-    1.5   1.20     MODIFIED    0.3   0.58  human_proximity_slowdown
-    2.0   0.70      BLOCKED    0.0   0.91  emergency_stop_human
-```
+HTTP: `GET /partenit/health`, `GET /partenit/observations`, `POST /partenit/command` (see [robot adapter spec](../../schemas/robot-adapter-api.yaml)).
 
-## Extending the scene
+---
 
-To add more humans or change their positions, edit `_HUMAN_WORLD_POS` in
-`h1_bridge.py` and update the `/partenit/observations` handler to return
-multiple observations.
+## Extending
 
-To replace H1 with G1 or B2, change the `usd_path` and `H1FlatTerrainPolicy`
-to the corresponding Isaac Sim robot asset and policy class.
+- More humans: edit `_HUMAN_WORLD_POS` and the `/partenit/observations` handler in `h1_bridge.py`.
+- Other robots (G1, B2): change `usd_path` and the policy class in `h1_bridge.py`.

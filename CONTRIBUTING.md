@@ -37,7 +37,7 @@ core → policy-dsl, trust-engine → agent-guard, adapters → safety-bench, de
 git clone https://github.com/partenit/partenit-infrastructure
 cd partenit-infrastructure
 
-# Install all packages in editable mode
+# Install all packages in editable mode (or run ./scripts/install.sh from repo root)
 pip install -e partenit/packages/core
 pip install -e partenit/packages/policy-dsl
 pip install -e partenit/packages/trust-engine

@@ -31,6 +31,7 @@ htmlcov/
 # Internal project files (not for public repo)
 IMPLEMENTATION_PLAN.md
 TESTING_GUIDE_RU.md
+PRODUCTION_READINESS.md
 _old/
 .claude/
 

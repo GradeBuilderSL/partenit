@@ -33,6 +33,8 @@ pip install partenit-core partenit-agent-guard partenit-safety-bench \
             partenit-policy-dsl partenit-decision-log partenit-adapters
 ```
 
+From source: `git clone https://github.com/partenit/partenit-infrastructure.git && cd partenit-infrastructure && ./scripts/install.sh`
+
 ```python
 from partenit.adapters import MockRobotAdapter
 from partenit.agent_guard import GuardedRobot
@@ -63,6 +65,10 @@ The guard automatically:
 
 Swap `MockRobotAdapter` → `IsaacSimAdapter` / `ROS2Adapter` / `HTTPRobotAdapter` — the guard stays identical.
 
+### Use with Isaac Sim
+
+If you develop or test robots in **NVIDIA Isaac Sim**, you get the same guard, logging, and grading with one adapter and a small bridge inside the sim. **Quick path:** start the H1 bridge in Isaac Sim (`examples/isaac_sim/h1_bridge.py`), then run `python examples/isaac_sim/minimal_guard_demo.py` to see one guarded command and the decision in the console. Full guide: [docs/guides/isaac-sim.md](docs/guides/isaac-sim.md).
+
 ---
 
 ## Why install Partenit in your robot project?
@@ -72,7 +78,7 @@ Swap `MockRobotAdapter` → `IsaacSimAdapter` / `ROS2Adapter` / `HTTPRobotAdapte
 | "My robot does something unsafe — why?" | `partenit-log replay decisions/` — visual timeline of every decision |
 | "Is my controller safe?" | `partenit-eval run scenario.yaml` — grades A–F with collision/near-miss metrics |
 | "Which policy fires at distance 1.2 m?" | `partenit-policy sim --human-distance 1.2 --policy-path policies/` |
-| "I need to run a scenario in Isaac Sim" | `IsaacSimAdapter` + `partenit-scenario run scenario.yaml` |
+| "I need to run a scenario in Isaac Sim" | [Isaac Sim guide](docs/guides/isaac-sim.md) + `IsaacSimAdapter` + `minimal_guard_demo.py` or `test_h1_isaac.py` |
 | "I want to compare v1 vs v2 controller" | `partenit-eval run scenario.yaml --compare baseline.yaml v2.yaml` |
 
 ---
@@ -178,6 +184,7 @@ The guard and policies are **identical** across all platforms — only the adapt
 | Unitree robots | `UnitreeAdapter` |
 | Gazebo | `GazeboAdapter` |
 | LLM tool calls | `LLMToolCallGuard` |
+| MoveIt / Open RMF | *Planned* — stubs only, not functional yet |
 
 ```python
 # Development / simulation
@@ -186,8 +193,8 @@ adapter = MockRobotAdapter()
 # Real ROS2 robot — only this line changes
 adapter = ROS2Adapter(node_name="partenit_guard")
 
-# Isaac Sim
-adapter = IsaacSimAdapter(base_url="http://localhost:7000")
+# Isaac Sim (H1 bridge example uses port 8000)
+adapter = IsaacSimAdapter(base_url="http://localhost:8000")
 
 # Everything below is identical regardless of adapter
 robot = GuardedRobot(adapter, policy_path="policies/warehouse.yaml")
@@ -298,6 +305,7 @@ partenit/
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, architecture rules, and the PR process.
 See [docs/](docs/) for full guides on Isaac Sim, ROS2, custom robots, and writing policies.
+See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for a release checklist and the two main user paths (no hardware + simulation).
 
 [<img src="partenit_robot.png" alt="Partenit robot" width="320" />](https://partenit.io)
 

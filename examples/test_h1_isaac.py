@@ -21,8 +21,11 @@ H1 Isaac Sim — полный тест всех инструментов Parteni
 
 from __future__ import annotations
 
+import json
 import subprocess
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 from partenit.adapters.isaac_sim import IsaacSimAdapter
@@ -57,25 +60,38 @@ def main() -> None:
     if health.get("status") != "ok":
         print(
             "\n  ОШИБКА: мост недоступен.\n"
-            "  Сначала запусти:\n"
+            "  Сначала запусти в Isaac Sim:\n"
             "    cd examples/isaac_sim/\n"
-            "    /home/partenit/isaacsim/_build/linux-x86_64/release/python.sh h1_bridge.py\n"
+            "    <Isaac Sim python.sh> h1_bridge.py\n"
+            "  См. examples/isaac_sim/README.md и docs/guides/isaac-sim.md\n"
         )
         raise SystemExit(1)
 
-    # Wait for physics loop to start (Isaac Sim loads scene asynchronously)
+    # Wait for physics loop to start (Isaac Sim loads scene asynchronously).
+    # Use urllib directly — bypasses IsaacSimAdapter CircuitBreaker which opens
+    # after 3 timeouts and blocks polling for 30s cooldown periods.
     if not health.get("ready", False):
         print("  Ожидаем запуска физики Isaac Sim", end="", flush=True)
-        for _ in range(60):  # max 60s
-            time.sleep(1.0)
-            h = adapter.get_health()
-            if h.get("ready"):
-                print(" готово!")
-                break
+        deadline = time.time() + 120  # max 2 minutes
+        ready = False
+        while time.time() < deadline:
+            time.sleep(2.0)
+            try:
+                with urllib.request.urlopen(
+                    f"{BRIDGE_URL}/partenit/health", timeout=3
+                ) as resp:
+                    data = json.loads(resp.read())
+                    if data.get("ready"):
+                        ready = True
+                        break
+            except (urllib.error.URLError, OSError):
+                pass
             print(".", end="", flush=True)
-        else:
-            print("\n  ОШИБКА: физика не запустилась за 60 секунд")
+        if not ready:
+            print("\n  ОШИБКА: физика не запустилась за 2 минуты")
             raise SystemExit(1)
+        print(" готово!")
+        time.sleep(3.0)  # let H1 stabilize at start position before commands
 
     obs = adapter.get_observations()
     print(f"  observations: {len(obs)} объект(ов)")
@@ -121,7 +137,7 @@ def main() -> None:
         policies = ", ".join(d.applied_policies) if d.applied_policies else "—"
         print(f"  {requested_speed:>5.1f}  {dist:>5.2f}  {result:>10}"
               f"  {final:>5.1f}  {risk:>5.2f}  {policies}")
-        time.sleep(1.5)
+        time.sleep(2.5)  # give H1 time to move noticeably between steps
 
     robot.stop()
     print(f"\n  ✓ OK — решения записаны в decisions/{SESSION}/")

@@ -543,6 +543,7 @@ cd analyzer && docker-compose up
 - Getting started:       /docs/getting-started.md
 - Writing policies:      /docs/guides/writing-policies.md
 - Simulation guide:      /docs/guides/simulation.md
+- Isaac Sim guide:       /docs/guides/isaac-sim.md
 - ROS2 integration:      /docs/guides/ros2-robot.md
 - Custom robot (HTTP):   /docs/guides/custom-robot.md
 - LLM agent guard:       /docs/guides/llm-agent.md

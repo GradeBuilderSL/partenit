@@ -132,14 +132,13 @@ class EvalRunner:
         )
 
         for ctrl in controllers:
-            with_guard = bool(ctrl.policy_paths)
-            # Temporarily override policy_paths if controller specifies them
+            # Guarded with no explicit policy_paths → use scenario's policies
+            with_guard = bool(ctrl.policy_paths) or (ctrl.name == "guarded")
             original_paths = config.policy_paths
             if ctrl.policy_paths:
                 config.policy_paths = ctrl.policy_paths
-            elif not ctrl.policy_paths:
-                # Baseline: run without guard
-                config.policy_paths = []
+            elif not with_guard:
+                config.policy_paths = []  # baseline: no guard
 
             try:
                 result = self._runner.run(

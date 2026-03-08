@@ -22,7 +22,8 @@ from partenit.decision_log import DecisionLogger
 
 
 def main() -> None:
-    adapter = IsaacSimAdapter(base_url="http://localhost:7000", robot_id="isaac-sim-demo")
+    # H1 bridge in examples/isaac_sim/ uses port 8000
+    adapter = IsaacSimAdapter(base_url="http://localhost:8000", robot_id="isaac-sim-demo")
 
     guard = AgentGuard()
     policies_path = Path(__file__).parent / "warehouse" / "policies.yaml"

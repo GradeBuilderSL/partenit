@@ -117,12 +117,15 @@ class GuardedRobot:
             observations=observations,
         )
 
-        # 4. Send to adapter if allowed
-        if decision.allowed:
-            try:
-                self._adapter.send_decision(decision)
-            except Exception as exc:
-                logger.warning("GuardedRobot: send_decision() failed: %s", exc)
+        # 4. Always send decision (allow → apply params; block → adapter sets stop).
+        # Adapters must get BLOCKED so they set cmd_vel=0; else robot keeps last cmd.
+        try:
+            effective = decision
+            if decision.allowed and decision.modified_params is None:
+                effective = decision.model_copy(update={"modified_params": dict(params)})
+            self._adapter.send_decision(effective)
+        except Exception as exc:
+            logger.warning("GuardedRobot: send_decision() failed: %s", exc)
 
         # 5. Log decision
         if self._logger is not None:

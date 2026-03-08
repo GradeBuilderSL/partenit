@@ -244,13 +244,15 @@ change only the adapter:
 
 ### Isaac Sim via `IsaacSimAdapter`
 
+See the dedicated [Isaac Sim guide](isaac-sim.md) for the full workflow. Minimal usage:
+
 ```python
 from pathlib import Path
 
 from partenit.adapters.isaac_sim import IsaacSimAdapter
 from partenit.agent_guard import AgentGuard
 
-adapter = IsaacSimAdapter(base_url="http://localhost:7000", robot_id="isaac-sim-demo")
+adapter = IsaacSimAdapter(base_url="http://localhost:8000", robot_id="isaac-sim-demo")
 
 guard = AgentGuard()
 guard.load_policies(Path("examples/warehouse/policies.yaml"))
