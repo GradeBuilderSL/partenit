@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-Apache%202.0-green)
-![Tests](https://img.shields.io/badge/tests-183%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-191%20passing-brightgreen)
 ![Packages](https://img.shields.io/badge/packages-7%20open--source-blue)
 
 [![Isaac Sim](https://img.shields.io/badge/Isaac%20Sim-4.x%20%7C%205.x-76b900?logo=nvidia&logoColor=white)](examples/isaac_sim/)
@@ -85,6 +85,8 @@ If you develop or test robots in **NVIDIA Isaac Sim**, you get the same guard, l
 | "Validate policies on every PR automatically" | [GitHub Action](#github-action--ci-integration) — 3 lines of YAML |
 | "I need to run a scenario in Isaac Sim" | [Isaac Sim guide](docs/guides/isaac-sim.md) + `IsaacSimAdapter` |
 | "I want to compare two controllers" | `partenit-eval run scenario.yaml --compare baseline.yaml v2.yaml` |
+| "How many decisions were blocked this session?" | `partenit-stats decisions/` — risk distribution, top policies, duration |
+| "Export decisions to CSV / JSON for analysis" | `partenit-log export decisions/ --format csv --output dump.csv` |
 
 ---
 
