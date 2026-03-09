@@ -18,7 +18,7 @@ info:
 
   contact:
     name: Partenit Open Source
-    url: https://github.com/partenit/partenit
+    url: https://github.com/GradeBuilderSL/partenit
 
 servers:
   - url: http://192.168.1.100

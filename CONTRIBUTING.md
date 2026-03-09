@@ -34,8 +34,8 @@ core → policy-dsl, trust-engine → agent-guard, adapters → safety-bench, de
 
 ```bash
 # Clone the repo
-git clone https://github.com/partenit/partenit-infrastructure
-cd partenit-infrastructure
+git clone https://github.com/GradeBuilderSL/partenit.git
+cd partenit
 
 # Install all packages in editable mode (or run ./scripts/install.sh from repo root)
 pip install -e partenit/packages/core

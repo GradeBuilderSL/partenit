@@ -33,7 +33,7 @@ pip install partenit-core partenit-agent-guard partenit-safety-bench \
             partenit-policy-dsl partenit-decision-log partenit-adapters
 ```
 
-From source: `git clone https://github.com/partenit/partenit-infrastructure.git && cd partenit-infrastructure && ./scripts/install.sh`
+From source: `git clone https://github.com/GradeBuilderSL/partenit.git && cd partenit && ./scripts/install.sh`
 
 ```python
 from partenit.adapters import MockRobotAdapter
