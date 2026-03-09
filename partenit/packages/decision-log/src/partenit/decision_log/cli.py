@@ -572,6 +572,15 @@ def main() -> None:
         help="Path to a .json packet file, .jsonl log file, or decisions directory",
     )
 
+    # stats
+    p_stats = sub.add_parser("stats", help="Statistical summary of guard decisions")
+    p_stats.add_argument(
+        "path",
+        nargs="?",
+        default="./decisions/",
+        help="Path to decisions directory or file (default: ./decisions/)",
+    )
+
     # watch
     p_watch = sub.add_parser("watch", help="Live monitor of guard decisions (tail a directory)")
     p_watch.add_argument(
@@ -595,6 +604,7 @@ def main() -> None:
         "inspect": _cmd_inspect,
         "replay": _cmd_replay,
         "why": _cmd_why,
+        "stats": _cmd_stats,
         "watch": _cmd_watch,
     }
     sys.exit(handlers[args.command](args))
@@ -824,6 +834,296 @@ def watch_main() -> None:
     )
     args = parser.parse_args()
     sys.exit(_cmd_watch(args))
+
+
+def _cmd_stats(args: argparse.Namespace) -> int:
+    """
+    Show a statistical summary of guard decisions in a session/directory.
+
+    Displays status breakdown, top fired policies, risk distribution,
+    and fingerprint integrity.
+    """
+    import json
+
+    from partenit.core.models import DecisionPacket
+    from partenit.decision_log.archive import DecisionArchive
+
+    path = Path(args.path)
+    packets: list = []
+
+    if path.is_file() and path.suffix == ".json":
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        items = raw if isinstance(raw, list) else [raw]
+        packets = [DecisionPacket.model_validate(d) for d in items]
+    elif path.is_file() and path.suffix == ".jsonl":
+        with open(path, encoding="utf-8") as f:
+            for ln in f:
+                ln = ln.strip()
+                if ln:
+                    packets.append(DecisionPacket.model_validate_json(ln))
+    elif path.is_dir():
+        archive = DecisionArchive(str(path))
+        packets = archive.query()
+    else:
+        print(f"ERROR: path not found: {path}", file=sys.stderr)
+        return 1
+
+    if not packets:
+        print("No decision packets found.")
+        return 0
+
+    # -- Compute stats --
+    n = len(packets)
+    n_allowed = sum(
+        1
+        for p in packets
+        if p.guard_decision.allowed and p.guard_decision.modified_params is None
+    )
+    n_modified = sum(
+        1
+        for p in packets
+        if p.guard_decision.allowed and p.guard_decision.modified_params is not None
+    )
+    n_blocked = sum(1 for p in packets if not p.guard_decision.allowed)
+
+    # Top policies
+    from collections import Counter
+
+    policy_counts: Counter = Counter()
+    for p in packets:
+        for pol in p.guard_decision.applied_policies or []:
+            policy_counts[pol] += 1
+
+    # Risk stats
+    risks = [p.guard_decision.risk_score.value for p in packets if p.guard_decision.risk_score]
+    risk_mean = sum(risks) / len(risks) if risks else None
+    risk_max = max(risks) if risks else None
+    risk_p95 = sorted(risks)[int(len(risks) * 0.95)] if len(risks) >= 2 else risk_max
+
+    # Min human distance from features
+    distances = []
+    for p in packets:
+        if p.guard_decision.risk_score and p.guard_decision.risk_score.contributors:
+            dist = p.guard_decision.risk_score.contributors.get("human_distance")
+            if dist is not None:
+                distances.append(float(dist))
+    min_dist = min(distances) if distances else None
+
+    # Session duration
+    sorted_pkts = sorted(packets, key=lambda p: p.timestamp)
+    duration_s: float | None = None
+    if len(sorted_pkts) >= 2:
+        delta = sorted_pkts[-1].timestamp - sorted_pkts[0].timestamp
+        duration_s = delta.total_seconds()
+
+    # Session name
+    session_name = path.stem if path.is_file() else path.name
+
+    # Fingerprint verification
+    n_valid = sum(1 for p in packets if p.compute_fingerprint() == p.fingerprint)
+    n_tampered = n - n_valid
+
+    _print_stats(
+        session_name=session_name,
+        n=n,
+        n_allowed=n_allowed,
+        n_modified=n_modified,
+        n_blocked=n_blocked,
+        policy_counts=policy_counts,
+        risk_mean=risk_mean,
+        risk_max=risk_max,
+        risk_p95=risk_p95,
+        min_dist=min_dist,
+        duration_s=duration_s,
+        n_valid=n_valid,
+        n_tampered=n_tampered,
+    )
+    return 0
+
+
+def _print_stats(**kw) -> None:
+    try:
+        import rich as _rich  # noqa: F401
+
+        _rich_stats(**kw)
+    except ImportError:
+        _plain_stats(**kw)
+
+
+def _bar(ratio: float, width: int = 20) -> str:
+    filled = round(ratio * width)
+    return "█" * filled + "░" * (width - filled)
+
+
+def _rich_stats(
+    session_name,
+    n,
+    n_allowed,
+    n_modified,
+    n_blocked,
+    policy_counts,
+    risk_mean,
+    risk_max,
+    risk_p95,
+    min_dist,
+    duration_s,
+    n_valid,
+    n_tampered,
+) -> None:
+    from rich.console import Console
+    from rich.rule import Rule
+    from rich.table import Table
+
+    console = Console()
+    console.print()
+
+    # Header
+    dur_str = ""
+    if duration_s is not None:
+        m, s = divmod(int(duration_s), 60)
+        dur_str = f"  │  Duration: {m}m {s:02d}s" if m else f"  │  Duration: {s}s"
+    console.print(
+        Rule(
+            f"[bold]Robot Safety Summary[/]  [dim]{session_name}[/]  "
+            f"Decisions: [bold]{n}[/]{dur_str}"
+        )
+    )
+    console.print()
+
+    # Status breakdown
+    console.print("[bold]Status breakdown:[/]")
+    for label, count, color in [
+        ("ALLOWED  ", n_allowed, "green"),
+        ("MODIFIED ", n_modified, "yellow"),
+        ("BLOCKED  ", n_blocked, "red"),
+    ]:
+        ratio = count / n if n else 0.0
+        pct = f"{ratio * 100:5.1f}%"
+        bar = _bar(ratio)
+        console.print(
+            f"  [{color}]● {label}[/]  {count:4d}  {pct}  [{color}]{bar}[/]"
+        )
+
+    # Top policies
+    if policy_counts:
+        console.print()
+        console.print("[bold]Top policies fired:[/]")
+        for pol, cnt in policy_counts.most_common(5):
+            console.print(f"  [dim]{pol:<40}[/] [bold]{cnt}x[/]")
+
+    # Risk stats
+    if risk_mean is not None:
+        console.print()
+        console.print("[bold]Risk scores:[/]")
+        console.print(
+            f"  Average: [yellow]{risk_mean:.2f}[/]  │  "
+            f"P95: [yellow]{risk_p95:.2f}[/]  │  "
+            f"Peak: [red]{risk_max:.2f}[/]"
+        )
+
+    # Extra
+    if min_dist is not None:
+        console.print(f"  Min human distance: [bold]{min_dist:.2f} m[/]")
+
+    # Fingerprints
+    console.print()
+    fp_color = "green" if n_tampered == 0 else "red"
+    fp_icon = "✓" if n_tampered == 0 else "⚠"
+    console.print(
+        f"[bold]Fingerprints:[/]  [{fp_color}]{fp_icon} {n_valid} valid[/]"
+        + (f"  [red]{n_tampered} tampered[/]" if n_tampered else "")
+    )
+
+    # Safety grade (simple heuristic, no bench dep)
+    if n > 0:
+        block_rate = n_blocked / n
+        grade = "A" if block_rate < 0.01 else "B" if block_rate < 0.05 else "C" if block_rate < 0.1 else "D"
+        grade_color = {"A": "green", "B": "cyan", "C": "yellow", "D": "red"}.get(grade, "red")
+        console.print(
+            f"  Blocked rate: [{grade_color}]{block_rate:.1%}[/]  │  "
+            f"Guard grade (heuristic): [{grade_color}][bold]{grade}[/][/]"
+        )
+
+    # Summary line
+    console.print()
+    table = Table.grid(padding=1)
+    table.add_row(
+        f"[green]{n_allowed}[/] allowed",
+        f"[yellow]{n_modified}[/] modified",
+        f"[red]{n_blocked}[/] blocked",
+        f"[dim]out of {n} decisions[/]",
+    )
+    console.print(table)
+    console.print()
+
+
+def _plain_stats(
+    session_name,
+    n,
+    n_allowed,
+    n_modified,
+    n_blocked,
+    policy_counts,
+    risk_mean,
+    risk_max,
+    risk_p95,
+    min_dist,
+    duration_s,
+    n_valid,
+    n_tampered,
+) -> None:
+    sep = "─" * 50
+    print(f"\nRobot Safety Summary — {session_name}")
+    print(sep)
+    if duration_s is not None:
+        m, s = divmod(int(duration_s), 60)
+        print(f"Duration: {m}m {s:02d}s  |  Decisions: {n}")
+    else:
+        print(f"Decisions: {n}")
+    print()
+
+    print("Status breakdown:")
+    for label, count in [("ALLOWED  ", n_allowed), ("MODIFIED ", n_modified), ("BLOCKED  ", n_blocked)]:
+        ratio = count / n if n else 0.0
+        print(f"  {label}  {count:4d}  {ratio * 100:5.1f}%  {_bar(ratio, 20)}")
+
+    if policy_counts:
+        print("\nTop policies fired:")
+        for pol, cnt in policy_counts.most_common(5):
+            print(f"  {pol:<40} {cnt}x")
+
+    if risk_mean is not None:
+        print(f"\nRisk: avg={risk_mean:.2f}  p95={risk_p95:.2f}  peak={risk_max:.2f}")
+
+    if min_dist is not None:
+        print(f"Min human distance: {min_dist:.2f} m")
+
+    fp_status = "OK" if n_tampered == 0 else f"TAMPERED ({n_tampered})"
+    print(f"\nFingerprints: {n_valid} valid / {n_tampered} tampered — {fp_status}")
+
+    if n > 0:
+        block_rate = n_blocked / n
+        grade = "A" if block_rate < 0.01 else "B" if block_rate < 0.05 else "C" if block_rate < 0.1 else "D"
+        print(f"Blocked rate: {block_rate:.1%}  |  Guard grade: {grade}")
+
+    print(f"\nSummary: {n_allowed} allowed  {n_modified} modified  {n_blocked} blocked")
+    print()
+
+
+def stats_main() -> None:
+    """Entry point for 'partenit-stats' command."""
+    parser = argparse.ArgumentParser(
+        prog="partenit-stats",
+        description="Show a statistical summary of Partenit guard decisions",
+    )
+    parser.add_argument(
+        "path",
+        nargs="?",
+        default="./decisions/",
+        help="Path to decisions directory or .jsonl/.json file (default: ./decisions/)",
+    )
+    args = parser.parse_args()
+    sys.exit(_cmd_stats(args))
 
 
 if __name__ == "__main__":

@@ -101,6 +101,37 @@ partenit-log inspect <packet_id> --storage-dir decisions/
 
 ---
 
+### `partenit-stats` — statistical summary of a session
+
+```bash
+partenit-stats decisions/session_01/
+partenit-stats decisions/                    # across all sessions
+```
+
+```
+Decision Stats — decisions/session_01  (42 packets)
+───────────────────────────────────────────────────
+ Status
+   ALLOWED   33  ████████████████████  78.6 %
+   MODIFIED   8  █████                 19.0 %
+   BLOCKED    1  █                      2.4 %
+
+ Risk score
+   mean 0.34   max 0.92   p95 0.81
+
+ Top policies fired
+   human_proximity_slowdown    8
+   emergency_stop              1
+
+ Min human distance   1.20 m
+ Session duration     48.3 s
+ Fingerprint check    42 / 42 valid
+```
+
+Also available as: `partenit-log stats <path>`
+
+---
+
 ### `partenit-record` — session management
 
 ```bash

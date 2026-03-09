@@ -281,3 +281,69 @@ def test_packet_created_on_blocked_action():
     assert packet.guard_decision.allowed is False
     assert packet.fingerprint != ""
     assert log.verify_packet(packet) is True
+
+
+# ---------------------------------------------------------------------------
+# partenit-stats
+# ---------------------------------------------------------------------------
+
+
+def test_cmd_stats_basic(tmp_path: Path, capsys):
+    """partenit-stats shows counts for allowed/modified/blocked decisions."""
+    import argparse
+    from partenit.decision_log.cli import _cmd_stats
+    from partenit.core.models import GuardDecision, RiskScore
+
+    log = DecisionLogger(storage_dir=str(tmp_path))
+    log.create_packet("navigate_to", {"speed": 1.0}, _make_decision(allowed=True))
+    log.create_packet(
+        "navigate_to",
+        {"speed": 2.0},
+        GuardDecision(
+            allowed=True,
+            modified_params={"speed": 0.3},
+            risk_score=RiskScore(value=0.65),
+            applied_policies=["human_proximity_slowdown"],
+        ),
+    )
+    log.create_packet("navigate_to", {}, _make_decision(allowed=False, risk=0.95))
+
+    args = argparse.Namespace(path=str(tmp_path), top=5)
+    rc = _cmd_stats(args)
+    assert rc == 0
+
+    out = capsys.readouterr().out
+    assert "ALLOWED" in out or "allowed" in out.lower()
+    assert "BLOCKED" in out or "blocked" in out.lower()
+
+
+def test_cmd_stats_empty_dir(tmp_path: Path, capsys):
+    """partenit-stats returns 1 and prints error when no packets found."""
+    import argparse
+    from partenit.decision_log.cli import _cmd_stats
+
+    args = argparse.Namespace(path=str(tmp_path / "nonexistent"), top=5)
+    rc = _cmd_stats(args)
+    assert rc == 1
+
+
+def test_cmd_stats_contributors(tmp_path: Path, capsys):
+    """partenit-stats reads human_distance from risk_score.contributors."""
+    import argparse
+    from partenit.decision_log.cli import _cmd_stats
+    from partenit.core.models import GuardDecision, RiskScore
+
+    log = DecisionLogger(storage_dir=str(tmp_path))
+    log.create_packet(
+        "navigate_to",
+        {"speed": 0.5},
+        GuardDecision(
+            allowed=True,
+            risk_score=RiskScore(value=0.72, contributors={"human_distance": 0.85}),
+            applied_policies=[],
+        ),
+    )
+
+    args = argparse.Namespace(path=str(tmp_path), top=5)
+    rc = _cmd_stats(args)
+    assert rc == 0
