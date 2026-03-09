@@ -400,3 +400,64 @@ def test_evaluator_compound_condition():
     # Only one condition true
     result = evaluator.evaluate(rules, {"human": {"distance": 1.0}, "robot": {"speed": 0.1}})
     assert result.has_violations is False
+
+
+# ---------------------------------------------------------------------------
+# partenit-init scaffold tests
+# ---------------------------------------------------------------------------
+
+
+def test_init_creates_expected_files(tmp_path):
+    from partenit.policy_dsl.init_cmd import scaffold
+
+    target = tmp_path / "my_robot"
+    created = scaffold(target, "my_robot")
+
+    labels = [label for _, label in created]
+    assert any("policies.yaml" in ln for ln in labels)
+    assert any("decisions" in ln for ln in labels)
+    assert any("main.py" in ln for ln in labels)
+    assert any(".gitignore" in ln for ln in labels)
+
+
+def test_init_policies_yaml_content(tmp_path):
+    from partenit.policy_dsl.init_cmd import scaffold
+    from partenit.policy_dsl.parser import PolicyParser
+
+    target = tmp_path / "proj"
+    scaffold(target, "proj")
+
+    parser = PolicyParser()
+    rules = parser.load_file(target / "policies" / "policies.yaml")
+    rule_ids = {r.rule_id for r in rules}
+    assert "human_proximity_slowdown" in rule_ids
+    assert "emergency_stop" in rule_ids
+
+
+def test_init_main_py_content(tmp_path):
+    from partenit.policy_dsl.init_cmd import scaffold
+
+    target = tmp_path / "proj"
+    scaffold(target, "proj")
+
+    main_py = (target / "main.py").read_text()
+    assert "GuardedRobot" in main_py
+    assert "MockRobotAdapter" in main_py
+    assert "proj" in main_py
+
+
+def test_init_idempotent(tmp_path):
+    """Running scaffold twice does not overwrite existing files."""
+    from partenit.policy_dsl.init_cmd import scaffold
+
+    target = tmp_path / "proj"
+    scaffold(target, "proj")
+
+    # Overwrite main.py
+    main_py = target / "main.py"
+    main_py.write_text("# custom content")
+
+    scaffold(target, "proj")  # second call
+
+    # File should NOT be overwritten
+    assert main_py.read_text() == "# custom content"

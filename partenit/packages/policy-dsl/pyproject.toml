@@ -18,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 partenit-policy = "partenit.policy_dsl.cli:main"
+partenit-init   = "partenit.policy_dsl.init_cmd:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/partenit"]

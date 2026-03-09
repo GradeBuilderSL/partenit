@@ -40,6 +40,30 @@ Higher priority always wins. Deterministic and logged.
 
 ## CLI tools
 
+### `partenit-init` — scaffold a new project
+
+```bash
+partenit-init my_robot
+```
+
+```
+  ✓ policies/policies.yaml
+  ✓ decisions/
+  ✓ main.py
+  ✓ .gitignore
+
+╭─ my_robot is ready! ────────────────────────╮
+│  cd my_robot                                │
+│  pip install partenit                       │
+│  python main.py                             │
+╰─────────────────────────────────────────────╯
+```
+
+Creates: starter safety policies, a `GuardedRobot` quickstart script,
+an empty `decisions/` directory, and a `.gitignore`.
+
+---
+
 ### `partenit-policy validate` — check for errors
 
 ```bash
