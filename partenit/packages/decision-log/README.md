@@ -132,6 +132,28 @@ Also available as: `partenit-log stats <path>`
 
 ---
 
+### `partenit-log export` — export decisions to JSON / JSONL / CSV
+
+```bash
+# JSON — array of all DecisionPackets
+partenit-log export decisions/session_01/ --format json --output dump.json
+
+# JSONL — one packet per line (streaming-friendly)
+partenit-log export decisions/session_01/ --format jsonl --output dump.jsonl
+
+# CSV — tabular summary (one row per packet)
+partenit-log export decisions/session_01/ --format csv --output dump.csv
+
+# Stdout (pipe-friendly)
+partenit-log export decisions/session_01/ --format json | jq '.[] | .guard_decision.allowed'
+```
+
+CSV columns: `packet_id, timestamp, action, allowed, modified, risk_score, policies`
+
+Also available as: `partenit-export <path> --format <fmt> [--output <file>]`
+
+---
+
 ### `partenit-record` — session management
 
 ```bash
