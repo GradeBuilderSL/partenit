@@ -71,3 +71,259 @@ rules:
       parameter: speed
       value: 1.5
       unit: m/s
+
+  - rule_id: low_battery_speed_limit
+    name: "Low Battery Speed Limit"
+    priority: task
+    condition:
+      type: threshold
+      metric: robot.battery_level
+      operator: less_than
+      value: 20
+      unit: percent
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.5
+      unit: m/s
+
+  - rule_id: critical_battery_dock
+    name: "Critical Battery — Dock Immediately"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: robot.battery_level
+      operator: less_than
+      value: 5
+      unit: percent
+    action:
+      type: block
+
+  - rule_id: restricted_zone_with_human_block
+    name: "Restricted Zone Block When Human Present"
+    priority: safety_critical
+    condition:
+      type: compound
+      conditions:
+        - type: threshold
+          metric: zone.type
+          operator: equals
+          value: "restricted"
+        - type: threshold
+          metric: zone.humans_present
+          operator: greater_than
+          value: 0
+    action:
+      type: block
+
+  - rule_id: one_way_direction_block
+    name: "One-way Direction Violation Block"
+    priority: legal
+    condition:
+      type: compound
+      conditions:
+        - type: threshold
+          metric: route.type
+          operator: equals
+          value: "one_way"
+        - type: threshold
+          metric: route.direction
+          operator: equals
+          value: "inbound"
+    action:
+      type: block
+
+  - rule_id: prefer_safe_wait
+    name: "Prefer Safe Waiting Over Unsafe Movement"
+    priority: efficiency
+    condition:
+      type: threshold
+      metric: action.type
+      operator: equals
+      value: "wait"
+    action:
+      type: clamp
+      parameter: risk_penalty
+      value: -0.1
+      unit: relative
+
+  - rule_id: intersection_slowdown
+    name: "Intersection Crossing Slowdown"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: zone.tag
+      operator: equals
+      value: "intersection"
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.5
+      unit: m/s
+
+  - rule_id: obstacle_emergency_stop
+    name: "Emergency Stop — Obstacle Too Close"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: obstacle.distance
+      operator: less_than
+      value: 0.3
+      unit: meters
+    action:
+      type: block
+
+  - rule_id: obstacle_proximity_slowdown
+    name: "Obstacle Proximity Slowdown"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: obstacle.distance
+      operator: less_than
+      value: 1.0
+      unit: meters
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.4
+      unit: m/s
+
+  - rule_id: following_distance_robot
+    name: "Following Distance Behind Another Robot"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: other_robot.distance
+      operator: less_than
+      value: 2.0
+      unit: meters
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.3
+      unit: m/s
+
+  - rule_id: dock_area_speed_cap
+    name: "Speed Cap in Docking Area"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: zone.type
+      operator: equals
+      value: "dock"
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.5
+      unit: m/s
+
+  - rule_id: slope_slowdown
+    name: "Slope Slowdown"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: slope.angle
+      operator: greater_than
+      value: 5
+      unit: degrees
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.4
+      unit: m/s
+
+  - rule_id: slope_heavy_load_block
+    name: "Block Heavy Load on Steep Slope"
+    priority: safety_critical
+    condition:
+      type: compound
+      conditions:
+        - type: threshold
+          metric: slope.angle
+          operator: greater_than
+          value: 10
+          unit: degrees
+        - type: threshold
+          metric: payload.weight
+          operator: greater_than
+          value: 500
+          unit: kg
+    action:
+      type: block
+
+  - rule_id: unstable_payload_block
+    name: "Unstable Payload Block"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: payload.center_of_mass_offset
+      operator: greater_than
+      value: 0.3
+      unit: meters
+    action:
+      type: block
+
+  - rule_id: high_load_speed_cap
+    name: "Speed Cap with Heavy Payload"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: payload.weight
+      operator: greater_than
+      value: 300
+      unit: kg
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.6
+      unit: m/s
+
+  - rule_id: low_visibility_slowdown
+    name: "Low Visibility Slowdown"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: env.visibility
+      operator: equals
+      value: "low"
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.3
+      unit: m/s
+
+  - rule_id: failed_lidar_block
+    name: "Block Movement on Lidar Failure"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: trust.lidar
+      operator: less_than
+      value: 0.2
+    action:
+      type: block
+
+  - rule_id: degraded_lidar_slowdown
+    name: "Slowdown on Degraded Lidar"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: trust.lidar
+      operator: less_than
+      value: 0.5
+    action:
+      type: clamp
+      parameter: speed
+      value: 0.4
+      unit: m/s
+
+  - rule_id: blind_spot_human_block
+    name: "Block When Human in Blind Spot"
+    priority: safety_critical
+    condition:
+      type: threshold
+      metric: human.position_relative
+      operator: equals
+      value: "blind_spot"
+    action:
+      type: block
