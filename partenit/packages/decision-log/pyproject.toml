@@ -16,9 +16,11 @@ dependencies = [
 ]
 
 [project.scripts]
-partenit-log = "partenit.decision_log.cli:main"
+partenit-log    = "partenit.decision_log.cli:main"
 partenit-replay = "partenit.decision_log.cli:replay_main"
 partenit-record = "partenit.decision_log.cli:record_main"
+partenit-why    = "partenit.decision_log.cli:why_main"
+partenit-watch  = "partenit.decision_log.cli:watch_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/partenit"]

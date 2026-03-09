@@ -7,6 +7,24 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+#### Decision explainability
+- `partenit-why` — explains any guard decision in plain English. Reads a `.json`
+  packet, `.jsonl` log, or decisions directory; renders action, status, risk score,
+  fired rules, param changes, risk contributors bar chart, and fingerprint status.
+  Falls back to plain text without `rich`. Also: `partenit-log why <path>`.
+- `partenit-watch` — live TUI monitor tailing a decisions directory. Shows running
+  totals (total / blocked / modified) and refreshes every 500ms.
+  Also: `partenit-log watch <path>`.
+- `partenit` meta-package — `pip install partenit` installs all open packages.
+  Extras: `partenit[http]`, `partenit[all]`.
+- 4 new tests for the `why` CLI command.
+
+---
+
 ## [0.2.0] — 2026-03-08
 
 ### Added

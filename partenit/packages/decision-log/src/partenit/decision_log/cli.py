@@ -356,6 +356,187 @@ def _cmd_record_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_why(args: argparse.Namespace) -> int:
+    """Explain a single decision in plain English."""
+    import json
+
+    from partenit.core.models import DecisionPacket
+
+    path = Path(args.path)
+
+    # Load packet
+    packet: DecisionPacket | None = None
+    if path.is_file() and path.suffix == ".json":
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                # Take first packet from list
+                packet = DecisionPacket.model_validate(data[0])
+            else:
+                packet = DecisionPacket.model_validate(data)
+        except Exception as exc:
+            print(f"ERROR: cannot read packet from {path}: {exc}", file=sys.stderr)
+            return 1
+    elif path.is_file() and path.suffix == ".jsonl":
+        # Take last packet from JSONL
+        lines = [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        if not lines:
+            print("ERROR: empty file", file=sys.stderr)
+            return 1
+        packet = DecisionPacket.model_validate_json(lines[-1])
+    elif path.is_dir():
+        # Search directory for packet by partial ID match
+        from partenit.decision_log.archive import DecisionArchive
+
+        archive = DecisionArchive(str(path))
+        packets = archive.query()
+        if not packets:
+            print(f"No packets found in {path}", file=sys.stderr)
+            return 1
+        packet = packets[-1]
+    else:
+        print(f"ERROR: path does not exist: {path}", file=sys.stderr)
+        return 1
+
+    _print_why(packet)
+    return 0
+
+
+def _print_why(packet: object) -> None:
+    """Render a human-readable explanation of a DecisionPacket."""
+    try:
+        import rich as _rich  # noqa: F401
+
+        _rich_why(packet)
+        return
+    except ImportError:
+        pass
+
+    # Plain fallback
+    d = packet.guard_decision
+    ts = packet.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")
+    status = "BLOCKED" if not d.allowed else ("MODIFIED" if d.modified_params else "ALLOWED")
+    risk = f"{d.risk_score.value:.2f}" if d.risk_score else "—"
+
+    print(f"\n{'─' * 58}")
+    print("  Decision Explanation")
+    print(f"{'─' * 58}")
+    print(f"  Action : {packet.action_requested}({_fmt_params(packet.action_params)})")
+    print(f"  Time   : {ts}")
+    print(f"  Status : {status}   Risk: {risk}")
+    print()
+
+    if not d.allowed:
+        print("  Why BLOCKED:")
+        if d.rejection_reason:
+            print(f"    → {d.rejection_reason}")
+        for policy in d.applied_policies:
+            print(f"    → Rule fired: {policy}")
+    elif d.modified_params:
+        print("  Why MODIFIED:")
+        for policy in d.applied_policies:
+            print(f"    → Rule fired: {policy}")
+        print("  Modified params:")
+        for k, v in d.modified_params.items():
+            orig = packet.action_params.get(k, "?")
+            if orig != v:
+                print(f"    {k}: {orig} → {v}")
+            else:
+                print(f"    {k}: {v}")
+    else:
+        print("  Decision: ALLOWED — no policies fired, risk within threshold.")
+
+    if d.risk_score and d.risk_score.contributors:
+        print("\n  Risk contributors:")
+        for feat, weight in sorted(d.risk_score.contributors.items(), key=lambda x: -x[1]):
+            bar = "█" * int(weight * 20)
+            print(f"    {feat:<30} {weight:.2f}  {bar}")
+
+    fp_valid = packet.compute_fingerprint() == packet.fingerprint
+    print(f"\n  Fingerprint: {'✓ VALID' if fp_valid else '⚠ TAMPERED'}")
+    print(f"{'─' * 58}\n")
+
+
+def _rich_why(packet: object) -> None:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.text import Text
+
+    console = Console()
+    d = packet.guard_decision
+    ts = packet.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")
+    risk = f"{d.risk_score.value:.2f}" if d.risk_score else "—"
+
+    if not d.allowed:
+        status_str = "[bold red]● BLOCKED[/]"
+        border = "red"
+    elif d.modified_params:
+        status_str = "[bold yellow]● MODIFIED[/]"
+        border = "yellow"
+    else:
+        status_str = "[bold green]● ALLOWED[/]"
+        border = "green"
+
+    lines = Text()
+    lines.append("Action : ", style="dim")
+    lines.append(f"{packet.action_requested}({_fmt_params(packet.action_params)})\n", style="bold")
+    lines.append(f"Time   : {ts}\n", style="dim")
+    lines.append("Status : ")
+    lines.append_text(Text.from_markup(f"{status_str}   "))
+    lines.append(f"Risk score: {risk}\n")
+
+    if not d.allowed:
+        lines.append("\nWhy BLOCKED:\n", style="bold")
+        if d.rejection_reason:
+            lines.append(f"  → {d.rejection_reason}\n", style="red")
+        for policy in d.applied_policies:
+            lines.append("  → Rule fired: ", style="dim")
+            lines.append(f"{policy}\n", style="yellow")
+    elif d.modified_params:
+        lines.append("\nWhy MODIFIED:\n", style="bold")
+        for policy in d.applied_policies:
+            lines.append("  → Rule fired: ", style="dim")
+            lines.append(f"{policy}\n", style="yellow")
+        lines.append("\nParameter changes:\n", style="bold")
+        for k, v in d.modified_params.items():
+            orig = packet.action_params.get(k, "?")
+            if orig != v:
+                lines.append(f"  {k}: ", style="dim")
+                lines.append(f"{orig}", style="red strike")
+                lines.append(" → ")
+                lines.append(f"{v}\n", style="green")
+            else:
+                lines.append(f"  {k}: {v}\n", style="dim")
+    else:
+        lines.append("\nNo policies fired. Risk within safe threshold.\n", style="green dim")
+
+    if d.risk_score and d.risk_score.contributors:
+        lines.append("\nRisk contributors:\n", style="bold")
+        for feat, weight in sorted(d.risk_score.contributors.items(), key=lambda x: -x[1]):
+            bar = "█" * int(weight * 16)
+            color = "red" if weight > 0.6 else "yellow" if weight > 0.3 else "green"
+            lines.append(f"  {feat:<28} ", style="dim")
+            lines.append(f"{weight:.2f}  ", style=color)
+            lines.append(f"{bar}\n", style=color)
+
+    fp_valid = packet.compute_fingerprint() == packet.fingerprint
+    fp_text = "✓ VALID" if fp_valid else "⚠ TAMPERED"
+    fp_style = "green dim" if fp_valid else "bold red"
+    lines.append("\nFingerprint: ", style="dim")
+    lines.append(fp_text, style=fp_style)
+
+    console.print()
+    console.print(Panel(lines, title="[bold]Decision Explanation[/]", border_style=border))
+    console.print()
+
+
+def _fmt_params(params: dict) -> str:
+    """Format action params as a compact string."""
+    if not params:
+        return ""
+    return ", ".join(f"{k}={v!r}" for k, v in list(params.items())[:4])
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="partenit-log",
@@ -384,14 +565,203 @@ def main() -> None:
     p_replay.add_argument("path", help="Path to decisions directory or .jsonl/.json file")
     p_replay.add_argument("--output", "-o", help="Output HTML file (default: terminal)")
 
+    # why
+    p_why = sub.add_parser("why", help="Explain a single decision in plain English")
+    p_why.add_argument(
+        "path",
+        help="Path to a .json packet file, .jsonl log file, or decisions directory",
+    )
+
+    # watch
+    p_watch = sub.add_parser("watch", help="Live monitor of guard decisions (tail a directory)")
+    p_watch.add_argument(
+        "path",
+        nargs="?",
+        default="./decisions/",
+        help="Decisions directory to watch (default: ./decisions/)",
+    )
+    p_watch.add_argument(
+        "--tail",
+        type=int,
+        default=20,
+        metavar="N",
+        help="Number of recent rows to show (default: 20)",
+    )
+
     args = parser.parse_args()
     handlers = {
         "verify": _cmd_verify,
         "report": _cmd_report,
         "inspect": _cmd_inspect,
         "replay": _cmd_replay,
+        "why": _cmd_why,
+        "watch": _cmd_watch,
     }
     sys.exit(handlers[args.command](args))
+
+
+def why_main() -> None:
+    """Entry point for 'partenit-why' command."""
+    parser = argparse.ArgumentParser(
+        prog="partenit-why",
+        description="Explain a Partenit guard decision in plain English",
+    )
+    parser.add_argument(
+        "path",
+        nargs="?",
+        default="./decisions/",
+        help="Path to .json packet, .jsonl log, or decisions directory (default: ./decisions/)",
+    )
+    args = parser.parse_args()
+    sys.exit(_cmd_why(args))
+
+
+def _cmd_watch(args: argparse.Namespace) -> int:
+    """Live monitor of guard decisions — tail a decisions directory."""
+    import time
+
+    from partenit.core.models import DecisionPacket
+
+    watch_dir = Path(args.path)
+    if not watch_dir.exists():
+        print(f"ERROR: directory does not exist: {watch_dir}", file=sys.stderr)
+        return 1
+
+    try:
+        import rich as _rich  # noqa: F401
+
+        _watch_rich(watch_dir, args)
+        return 0
+    except ImportError:
+        pass
+
+    # Plain fallback: tail and print
+    print(f"Watching {watch_dir} for new decisions... (Ctrl+C to stop)\n")
+    seen_bytes: dict[Path, int] = {}
+
+    try:
+        while True:
+            for jsonl_file in sorted(watch_dir.rglob("*.jsonl")):
+                prev = seen_bytes.get(jsonl_file, 0)
+                size = jsonl_file.stat().st_size
+                if size > prev:
+                    with open(jsonl_file, encoding="utf-8") as f:
+                        f.seek(prev)
+                        for line in f:
+                            line = line.strip()
+                            if line:
+                                try:
+                                    p = DecisionPacket.model_validate_json(line)
+                                    d = p.guard_decision
+                                    ts = p.timestamp.strftime("%H:%M:%S")
+                                    risk = f"{d.risk_score.value:.2f}" if d.risk_score else "---"
+                                    status = (
+                                        "BLOCKED "
+                                        if not d.allowed
+                                        else ("MODIFIED" if d.modified_params else "ALLOWED ")
+                                    )
+                                    policies = (
+                                        ", ".join(d.applied_policies) if d.applied_policies else ""
+                                    )
+                                    print(
+                                        f" {ts}  [{status}] {p.action_requested:<16} risk={risk}  {policies}"
+                                    )
+                                except Exception:
+                                    pass
+                    seen_bytes[jsonl_file] = size
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        print("\nStopped.")
+    return 0
+
+
+def _watch_rich(watch_dir: Path, args: argparse.Namespace) -> None:  # type: ignore[name-defined]
+    """Rich TUI live monitor."""
+    import time
+
+    from rich.console import Console
+    from rich.live import Live
+    from rich.table import Table
+
+    from partenit.core.models import DecisionPacket
+
+    console = Console()
+    max_rows = getattr(args, "tail", 20)
+    session_name = watch_dir.name
+
+    decisions: list[tuple[str, str, str, str, str]] = []  # ts, status, action, risk, detail
+    stats = {"total": 0, "blocked": 0, "modified": 0}
+    seen_bytes: dict[Path, int] = {}
+
+    def _make_table() -> Table:
+        table = Table(
+            show_header=True,
+            header_style="bold cyan",
+            border_style="dim",
+            title=f"[bold cyan]Partenit Guard Monitor[/] — {session_name}  "
+            f"[dim]total={stats['total']} "
+            f"[red]blocked={stats['blocked']}[/] "
+            f"[yellow]modified={stats['modified']}[/][/dim]",
+            title_justify="left",
+        )
+        table.add_column("Time", style="dim", width=10)
+        table.add_column("Status", width=10)
+        table.add_column("Action", width=18)
+        table.add_column("Risk", width=6)
+        table.add_column("Policies / Reason", style="dim")
+
+        for ts, status, action, risk, detail in decisions[-max_rows:]:
+            table.add_row(ts, status, action, risk, detail)
+
+        return table
+
+    def _poll() -> None:
+        for jsonl_file in sorted(watch_dir.rglob("*.jsonl")):
+            prev = seen_bytes.get(jsonl_file, 0)
+            size = jsonl_file.stat().st_size
+            if size > prev:
+                with open(jsonl_file, encoding="utf-8") as f:
+                    f.seek(prev)
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            p = DecisionPacket.model_validate_json(line)
+                            d = p.guard_decision
+                            ts = p.timestamp.strftime("%H:%M:%S")
+                            risk = f"{d.risk_score.value:.2f}" if d.risk_score else "—"
+                            if not d.allowed:
+                                status = "[bold red]BLOCKED [/]"
+                                detail = d.rejection_reason or ""
+                            elif d.modified_params:
+                                status = "[bold yellow]MODIFIED[/]"
+                                detail = ", ".join(d.applied_policies) if d.applied_policies else ""
+                            else:
+                                status = "[bold green]ALLOWED [/]"
+                                detail = ""
+                            decisions.append((ts, status, p.action_requested, risk, detail))
+                            stats["total"] += 1
+                            if not d.allowed:
+                                stats["blocked"] += 1
+                            elif d.modified_params:
+                                stats["modified"] += 1
+                        except Exception:
+                            pass
+                seen_bytes[jsonl_file] = size
+
+    console.print(f"[dim]Watching [bold]{watch_dir}[/] — Ctrl+C to stop[/]\n")
+
+    with Live(_make_table(), console=console, refresh_per_second=2, screen=False) as live:
+        try:
+            while True:
+                _poll()
+                live.update(_make_table())
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            pass
+
+    console.print("\n[dim]Guard monitor stopped.[/]")
 
 
 def replay_main() -> None:
@@ -431,6 +801,29 @@ def record_main() -> None:
         "export": _cmd_record_export,
     }
     sys.exit(handlers[args.command](args))
+
+
+def watch_main() -> None:
+    """Entry point for 'partenit-watch' command."""
+    parser = argparse.ArgumentParser(
+        prog="partenit-watch",
+        description="Live monitor of Partenit guard decisions",
+    )
+    parser.add_argument(
+        "path",
+        nargs="?",
+        default="./decisions/",
+        help="Decisions directory to watch (default: ./decisions/)",
+    )
+    parser.add_argument(
+        "--tail",
+        type=int,
+        default=20,
+        metavar="N",
+        help="Number of recent decisions to display (default: 20)",
+    )
+    args = parser.parse_args()
+    sys.exit(_cmd_watch(args))
 
 
 if __name__ == "__main__":

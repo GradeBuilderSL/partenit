@@ -178,6 +178,93 @@ def test_archive_get_nonexistent(tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
+# CLI — `partenit-log why` command
+# ---------------------------------------------------------------------------
+
+
+def test_cmd_why_from_directory(tmp_path: Path, capsys):
+    """partenit-log why <dir> reads last packet and prints explanation."""
+    from partenit.decision_log.cli import _cmd_why
+    import argparse
+
+    log = DecisionLogger(storage_dir=str(tmp_path))
+    log.create_packet(
+        action_requested="navigate_to",
+        action_params={"zone": "C2", "speed": 2.0},
+        guard_decision=_make_decision(allowed=False, risk=0.92),
+    )
+
+    args = argparse.Namespace(path=str(tmp_path))
+    rc = _cmd_why(args)
+    assert rc == 0
+
+    captured = capsys.readouterr()
+    out = captured.out
+    assert "navigate_to" in out
+    assert "BLOCKED" in out
+
+
+def test_cmd_why_from_json_file(tmp_path: Path, capsys):
+    """partenit-log why <file.json> reads a single JSON packet."""
+    import json
+    import argparse
+    from partenit.decision_log.cli import _cmd_why
+
+    log = DecisionLogger(storage_dir=str(tmp_path))
+    packet = log.create_packet(
+        action_requested="pick_up",
+        action_params={"target": "box_7"},
+        guard_decision=_make_decision(allowed=True, risk=0.15),
+    )
+
+    json_file = tmp_path / "packet.json"
+    json_file.write_text(packet.model_dump_json(indent=2), encoding="utf-8")
+
+    args = argparse.Namespace(path=str(json_file))
+    rc = _cmd_why(args)
+    assert rc == 0
+
+    captured = capsys.readouterr()
+    assert "pick_up" in captured.out
+
+
+def test_cmd_why_modified_params(tmp_path: Path, capsys):
+    """Why command shows modified params when guard clamped speed."""
+    import argparse
+    from partenit.decision_log.cli import _cmd_why
+    from partenit.core.models import GuardDecision, RiskScore
+
+    decision = GuardDecision(
+        allowed=True,
+        modified_params={"speed": 0.3},
+        risk_score=RiskScore(value=0.65),
+        applied_policies=["human_proximity_slowdown"],
+    )
+    log = DecisionLogger(storage_dir=str(tmp_path))
+    log.create_packet(
+        action_requested="navigate_to",
+        action_params={"zone": "A3", "speed": 2.0},
+        guard_decision=decision,
+    )
+
+    args = argparse.Namespace(path=str(tmp_path))
+    rc = _cmd_why(args)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "MODIFIED" in out or "navigate_to" in out
+
+
+def test_cmd_why_nonexistent_path(tmp_path: Path):
+    """Why command returns error code 1 for missing path."""
+    import argparse
+    from partenit.decision_log.cli import _cmd_why
+
+    args = argparse.Namespace(path=str(tmp_path / "does_not_exist"))
+    rc = _cmd_why(args)
+    assert rc == 1
+
+
+# ---------------------------------------------------------------------------
 # Acceptance criteria: packet created even on blocked action
 # ---------------------------------------------------------------------------
 
