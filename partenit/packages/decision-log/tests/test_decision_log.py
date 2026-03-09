@@ -445,3 +445,87 @@ def test_export_empty_dir(tmp_path):
     args = argparse.Namespace(path=str(tmp_path / "nope"), format="json", output=None)
     rc = _cmd_export(args)
     assert rc == 1
+
+# ---------------------------------------------------------------------------
+# partenit-stats --format json
+# ---------------------------------------------------------------------------
+
+
+def test_stats_json_format(tmp_path: Path, capsys):
+    """partenit-stats --format json outputs valid JSON with expected keys."""
+    import json
+    import argparse
+    from partenit.decision_log.cli import _cmd_stats
+
+    _make_session(tmp_path)
+    args = argparse.Namespace(path=str(tmp_path), format="json")
+    rc = _cmd_stats(args)
+    assert rc == 0
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+    assert data["total"] == 3
+    assert data["allowed"] == 1
+    assert data["modified"] == 1
+    assert data["blocked"] == 1
+    assert "risk" in data
+    assert "fingerprints" in data
+    assert data["fingerprints"]["valid"] == 3
+
+
+def test_stats_json_top_policies(tmp_path: Path, capsys):
+    """partenit-stats --format json includes top_policies list."""
+    import json
+    import argparse
+    from partenit.decision_log.cli import _cmd_stats
+
+    _make_session(tmp_path)
+    args = argparse.Namespace(path=str(tmp_path), format="json")
+    _cmd_stats(args)
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+    policy_names = [p[0] for p in data["top_policies"]]
+    assert "human_proximity_slowdown" in policy_names
+
+
+# ---------------------------------------------------------------------------
+# partenit-log export --session
+# ---------------------------------------------------------------------------
+
+
+def test_export_session_filter(tmp_path: Path, capsys):
+    """partenit-log export --session exports only that session."""
+    import json
+    import argparse
+    from partenit.decision_log.cli import _cmd_export
+
+    # create two sessions
+    session_a = tmp_path / "session_a"
+    session_a.mkdir()
+    _make_session(session_a)
+
+    session_b = tmp_path / "session_b"
+    session_b.mkdir()
+    log = DecisionLogger(storage_dir=str(session_b))
+    log.create_packet("pick_up", {"target": "box"}, _make_decision(allowed=True))
+
+    # export only session_a (3 packets)
+    args = argparse.Namespace(
+        path=str(tmp_path), format="json", output=None, session="session_a"
+    )
+    rc = _cmd_export(args)
+    assert rc == 0
+    data = json.loads(capsys.readouterr().out)
+    assert len(data) == 3
+
+
+def test_export_session_not_found(tmp_path: Path):
+    """partenit-log export --session returns 1 when session does not exist."""
+    import argparse
+    from partenit.decision_log.cli import _cmd_export
+
+    _make_session(tmp_path)
+    args = argparse.Namespace(
+        path=str(tmp_path), format="json", output=None, session="no_such_session"
+    )
+    rc = _cmd_export(args)
+    assert rc == 1

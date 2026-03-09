@@ -580,6 +580,13 @@ def main() -> None:
         default="./decisions/",
         help="Path to decisions directory or file (default: ./decisions/)",
     )
+    p_stats.add_argument(
+        "--format",
+        "-f",
+        choices=["text", "json"],
+        default="text",
+        help="Output format: text (default) or json",
+    )
 
     # watch
     p_watch = sub.add_parser("watch", help="Live monitor of guard decisions (tail a directory)")
@@ -617,6 +624,13 @@ def main() -> None:
         "-o",
         default=None,
         help="Output file path (default: stdout)",
+    )
+    p_export.add_argument(
+        "--session",
+        "-s",
+        default=None,
+        metavar="NAME",
+        help="Export only a specific session subdirectory",
     )
 
     args = parser.parse_args()
@@ -946,6 +960,28 @@ def _cmd_stats(args: argparse.Namespace) -> int:
     n_valid = sum(1 for p in packets if p.compute_fingerprint() == p.fingerprint)
     n_tampered = n - n_valid
 
+    fmt = getattr(args, "format", "text") or "text"
+
+    if fmt == "json":
+        data: dict = {
+            "session": session_name,
+            "total": n,
+            "allowed": n_allowed,
+            "modified": n_modified,
+            "blocked": n_blocked,
+            "risk": {
+                "mean": round(risk_mean, 4) if risk_mean is not None else None,
+                "p95": round(risk_p95, 4) if risk_p95 is not None else None,
+                "max": round(risk_max, 4) if risk_max is not None else None,
+            },
+            "top_policies": policy_counts.most_common(10),
+            "min_human_distance_m": round(min_dist, 4) if min_dist is not None else None,
+            "duration_s": round(duration_s, 2) if duration_s is not None else None,
+            "fingerprints": {"valid": n_valid, "tampered": n_tampered},
+        }
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+        return 0
+
     _print_stats(
         session_name=session_name,
         n=n,
@@ -1145,6 +1181,13 @@ def stats_main() -> None:
         default="./decisions/",
         help="Path to decisions directory or .jsonl/.json file (default: ./decisions/)",
     )
+    parser.add_argument(
+        "--format",
+        "-f",
+        choices=["text", "json"],
+        default="text",
+        help="Output format: text (default) or json (machine-readable)",
+    )
     args = parser.parse_args()
     sys.exit(_cmd_stats(args))
 
@@ -1193,7 +1236,18 @@ def _cmd_export(args: argparse.Namespace) -> int:
     """Export decision packets to JSON or CSV."""
     import json
 
-    packets = _load_packets_from(args.path)
+    # If --session is specified, resolve to path/session_name/
+    load_path = args.path
+    session_filter = getattr(args, "session", None)
+    if session_filter:
+        candidate = Path(args.path) / session_filter
+        if candidate.is_dir():
+            load_path = str(candidate)
+        else:
+            print(f"ERROR: session '{session_filter}' not found under {args.path}", file=sys.stderr)
+            return 1
+
+    packets = _load_packets_from(load_path)
     if not packets:
         print(f"No packets found at: {args.path}", file=sys.stderr)
         return 1
@@ -1292,6 +1346,13 @@ def export_main() -> None:
         "-o",
         default=None,
         help="Output file path (default: stdout)",
+    )
+    parser.add_argument(
+        "--session",
+        "-s",
+        default=None,
+        metavar="NAME",
+        help="Export only a specific session subdirectory",
     )
     args = parser.parse_args()
     sys.exit(_cmd_export(args))

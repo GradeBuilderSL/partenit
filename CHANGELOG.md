@@ -11,6 +11,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+#### Decision analytics & export
+- `partenit-stats` — statistical summary of a guard session: status breakdown
+  (allowed / modified / blocked) with bar charts, top 5 fired policies, risk
+  distribution (mean / p95 / peak), min human distance, session duration,
+  fingerprint integrity check, and a heuristic guard grade.
+  New `--format json` flag outputs machine-readable JSON for CI pipelines.
+  Also: `partenit-log stats <path>`.
+- `partenit-log export` / `partenit-export` — export decision packets to
+  JSON (array), JSONL (one packet per line), or CSV (tabular summary).
+  New `--session <name>` flag filters to a specific session subdirectory
+  without changing the base path argument.
+- 4 new tests for `--format json` (stats) and `--session` (export).
+- All package READMEs rewritten with full API documentation, field tables,
+  and working code examples for every adapter and CLI tool.
+
 #### Decision explainability
 - `partenit-why` — explains any guard decision in plain English. Reads a `.json`
   packet, `.jsonl` log, or decisions directory; renders action, status, risk score,

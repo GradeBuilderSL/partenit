@@ -327,3 +327,68 @@ rules:
       value: "blind_spot"
     action:
       type: block
+
+  - rule_id: multi_robot_yield_in_narrow_aisle
+    name: "Yield to Priority Robot in Narrow Aisle"
+    priority: safety_critical
+    condition:
+      type: compound
+      conditions:
+        - type: threshold
+          metric: zone.tag
+          operator: equals
+          value: "narrow_aisle"
+        - type: threshold
+          metric: other_robot.distance
+          operator: less_than
+          value: 3.0
+          unit: meters
+        - type: threshold
+          metric: other_robot.has_priority
+          operator: equals
+          value: true
+    action:
+      type: block
+
+  - rule_id: multi_robot_standoff_backoff
+    name: "Resolve Head-on Standoff by Backoff"
+    priority: safety_critical
+    condition:
+      type: compound
+      conditions:
+        - type: threshold
+          metric: multi_robot.state
+          operator: equals
+          value: "standoff"
+        - type: threshold
+          metric: multi_robot.duration_seconds
+          operator: greater_than
+          value: 5
+        - type: threshold
+          metric: robot.yield_role
+          operator: equals
+          value: "backoff"
+    action:
+      type: block
+
+  - rule_id: multi_robot_no_overtake_in_narrow_aisle
+    name: "No Overtake in Narrow Aisle"
+    priority: safety_critical
+    condition:
+      type: compound
+      conditions:
+        - type: threshold
+          metric: zone.tag
+          operator: equals
+          value: "narrow_aisle"
+        - type: threshold
+          metric: other_robot.distance
+          operator: less_than
+          value: 2.0
+          unit: meters
+        - type: threshold
+          metric: action.type
+          operator: equals
+          value: "overtake"
+    action:
+      type: block
