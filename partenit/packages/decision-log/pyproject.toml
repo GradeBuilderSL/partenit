@@ -22,6 +22,7 @@ partenit-record = "partenit.decision_log.cli:record_main"
 partenit-why    = "partenit.decision_log.cli:why_main"
 partenit-watch  = "partenit.decision_log.cli:watch_main"
 partenit-stats  = "partenit.decision_log.cli:stats_main"
+partenit-export = "partenit.decision_log.cli:export_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/partenit"]

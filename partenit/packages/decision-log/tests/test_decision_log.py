@@ -347,3 +347,101 @@ def test_cmd_stats_contributors(tmp_path: Path, capsys):
     args = argparse.Namespace(path=str(tmp_path), top=5)
     rc = _cmd_stats(args)
     assert rc == 0
+
+
+# ---------------------------------------------------------------------------
+# partenit-log export / partenit-export
+# ---------------------------------------------------------------------------
+
+
+def _make_session(tmp_path):
+    """Write 3 packets (allowed/modified/blocked) to tmp_path."""
+    from partenit.core.models import GuardDecision, RiskScore
+
+    log = DecisionLogger(storage_dir=str(tmp_path))
+    log.create_packet("navigate_to", {"speed": 1.0}, _make_decision(allowed=True))
+    log.create_packet(
+        "navigate_to",
+        {"speed": 2.0},
+        GuardDecision(
+            allowed=True,
+            modified_params={"speed": 0.3},
+            risk_score=RiskScore(value=0.65),
+            applied_policies=["human_proximity_slowdown"],
+        ),
+    )
+    log.create_packet("navigate_to", {}, _make_decision(allowed=False, risk=0.95))
+
+
+def test_export_json_stdout(tmp_path, capsys):
+    """partenit-log export prints valid JSON array to stdout."""
+    import json
+    import argparse
+    from partenit.decision_log.cli import _cmd_export
+
+    _make_session(tmp_path)
+    args = argparse.Namespace(path=str(tmp_path), format="json", output=None)
+    rc = _cmd_export(args)
+    assert rc == 0
+    out = capsys.readouterr().out
+    data = json.loads(out)
+    assert isinstance(data, list)
+    assert len(data) == 3
+    assert all("packet_id" in d for d in data)
+
+
+def test_export_json_file(tmp_path):
+    """partenit-log export --output writes JSON file."""
+    import json
+    import argparse
+    from partenit.decision_log.cli import _cmd_export
+
+    _make_session(tmp_path)
+    out_file = tmp_path / "export.json"
+    args = argparse.Namespace(path=str(tmp_path), format="json", output=str(out_file))
+    rc = _cmd_export(args)
+    assert rc == 0
+    assert out_file.exists()
+    data = json.loads(out_file.read_text())
+    assert len(data) == 3
+
+
+def test_export_csv_stdout(tmp_path, capsys):
+    """partenit-log export --format csv prints CSV with header."""
+    import argparse
+    from partenit.decision_log.cli import _cmd_export
+
+    _make_session(tmp_path)
+    args = argparse.Namespace(path=str(tmp_path), format="csv", output=None)
+    rc = _cmd_export(args)
+    assert rc == 0
+    out = capsys.readouterr().out
+    lines = out.strip().splitlines()
+    assert lines[0].startswith("packet_id,timestamp")
+    assert len(lines) == 4  # header + 3 rows
+
+
+def test_export_jsonl_file(tmp_path):
+    """partenit-log export --format jsonl writes one JSON object per line."""
+    import json
+    import argparse
+    from partenit.decision_log.cli import _cmd_export
+
+    _make_session(tmp_path)
+    out_file = tmp_path / "export.jsonl"
+    args = argparse.Namespace(path=str(tmp_path), format="jsonl", output=str(out_file))
+    rc = _cmd_export(args)
+    assert rc == 0
+    lines = out_file.read_text().strip().splitlines()
+    assert len(lines) == 3
+    assert all(json.loads(line).get("packet_id") for line in lines)
+
+
+def test_export_empty_dir(tmp_path):
+    """partenit-log export returns 1 when no packets found."""
+    import argparse
+    from partenit.decision_log.cli import _cmd_export
+
+    args = argparse.Namespace(path=str(tmp_path / "nope"), format="json", output=None)
+    rc = _cmd_export(args)
+    assert rc == 1

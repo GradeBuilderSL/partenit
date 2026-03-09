@@ -597,6 +597,28 @@ def main() -> None:
         help="Number of recent rows to show (default: 20)",
     )
 
+    # export
+    p_export = sub.add_parser("export", help="Export decision packets to JSON, JSONL, or CSV")
+    p_export.add_argument(
+        "path",
+        nargs="?",
+        default="./decisions/",
+        help="Path to decisions directory or file (default: ./decisions/)",
+    )
+    p_export.add_argument(
+        "--format",
+        "-f",
+        choices=["json", "jsonl", "csv"],
+        default="json",
+        help="Output format: json (default), jsonl, csv",
+    )
+    p_export.add_argument(
+        "--output",
+        "-o",
+        default=None,
+        help="Output file path (default: stdout)",
+    )
+
     args = parser.parse_args()
     handlers = {
         "verify": _cmd_verify,
@@ -606,6 +628,7 @@ def main() -> None:
         "why": _cmd_why,
         "stats": _cmd_stats,
         "watch": _cmd_watch,
+        "export": _cmd_export,
     }
     sys.exit(handlers[args.command](args))
 
@@ -1124,6 +1147,154 @@ def stats_main() -> None:
     )
     args = parser.parse_args()
     sys.exit(_cmd_stats(args))
+
+
+# ---------------------------------------------------------------------------
+# partenit-log export
+# ---------------------------------------------------------------------------
+
+
+def _load_packets_from(path: str) -> list:
+    """Load DecisionPackets from path (json / jsonl / directory)."""
+    from partenit.core.models import DecisionPacket
+    from partenit.decision_log.storage import LocalFileStorage
+
+    p = Path(path)
+    packets: list = []
+
+    if p.is_file():
+        if p.suffix == ".jsonl":
+            import jsonlines  # type: ignore[import]
+
+            with jsonlines.open(p) as reader:
+                for obj in reader:
+                    packets.append(DecisionPacket.model_validate(obj))
+        elif p.suffix == ".json":
+            import json
+
+            data = json.loads(p.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                packets = [DecisionPacket.model_validate(d) for d in data]
+            else:
+                packets = [DecisionPacket.model_validate(data)]
+    elif p.is_dir():
+        storage = LocalFileStorage(str(p))
+        packets = list(storage.read_all())
+        if not packets:
+            # recurse into session subdirectories
+            for sub in sorted(p.iterdir()):
+                if sub.is_dir():
+                    st = LocalFileStorage(str(sub))
+                    packets.extend(list(st.read_all()))
+    return packets
+
+
+def _cmd_export(args: argparse.Namespace) -> int:
+    """Export decision packets to JSON or CSV."""
+    import json
+
+    packets = _load_packets_from(args.path)
+    if not packets:
+        print(f"No packets found at: {args.path}", file=sys.stderr)
+        return 1
+
+    fmt = (args.format or "json").lower()
+    out_path = Path(args.output) if args.output else None
+
+    if fmt == "json":
+        data = [json.loads(p.model_dump_json()) for p in packets]
+        text = json.dumps(data, indent=2, ensure_ascii=False)
+        if out_path:
+            out_path.write_text(text, encoding="utf-8")
+            print(f"Exported {len(packets)} packets → {out_path}")
+        else:
+            print(text)
+
+    elif fmt == "jsonl":
+        lines = [p.model_dump_json() for p in packets]
+        text = "\n".join(lines) + "\n"
+        if out_path:
+            out_path.write_text(text, encoding="utf-8")
+            print(f"Exported {len(packets)} packets → {out_path}")
+        else:
+            print(text, end="")
+
+    elif fmt == "csv":
+        import csv
+        import io
+
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(
+            [
+                "packet_id",
+                "timestamp",
+                "action_requested",
+                "allowed",
+                "modified",
+                "risk_score",
+                "applied_policies",
+                "rejection_reason",
+                "fingerprint",
+            ]
+        )
+        for p in packets:
+            gd = p.guard_decision
+            modified = gd.modified_params is not None and bool(gd.modified_params)
+            writer.writerow(
+                [
+                    p.packet_id,
+                    p.timestamp.isoformat(),
+                    p.action_requested,
+                    gd.allowed,
+                    modified,
+                    f"{gd.risk_score.value:.4f}" if gd.risk_score else "",
+                    ";".join(gd.applied_policies),
+                    gd.rejection_reason or "",
+                    p.fingerprint,
+                ]
+            )
+        text = buf.getvalue()
+        if out_path:
+            out_path.write_text(text, encoding="utf-8")
+            print(f"Exported {len(packets)} packets → {out_path}")
+        else:
+            print(text, end="")
+
+    else:
+        print(f"Unknown format: {fmt!r}. Choose: json, jsonl, csv", file=sys.stderr)
+        return 1
+
+    return 0
+
+
+def export_main() -> None:
+    """Entry point for 'partenit-export' command."""
+    parser = argparse.ArgumentParser(
+        prog="partenit-export",
+        description="Export Partenit decision packets to JSON, JSONL, or CSV",
+    )
+    parser.add_argument(
+        "path",
+        nargs="?",
+        default="./decisions/",
+        help="Path to decisions directory or file (default: ./decisions/)",
+    )
+    parser.add_argument(
+        "--format",
+        "-f",
+        choices=["json", "jsonl", "csv"],
+        default="json",
+        help="Output format: json (default), jsonl, csv",
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        default=None,
+        help="Output file path (default: stdout)",
+    )
+    args = parser.parse_args()
+    sys.exit(_cmd_export(args))
 
 
 if __name__ == "__main__":
