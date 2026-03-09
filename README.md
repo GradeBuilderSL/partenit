@@ -400,16 +400,26 @@ Every pull request that modifies policies will automatically:
 - Validate YAML syntax and policy semantics
 - Detect conflicting rules (PR fails if conflicts are found)
 
-Add `scenario:` to also run a safety simulation:
+Add `scenario:` to run a safety simulation and upload an HTML report:
 
 ```yaml
-      - uses: GradeBuilderSL/partenit@main
+      - uses: GradeBuilderSL/partenit@v1
         with:
           policy-path: policies/
           scenario: tests/scenarios/human_crossing.yaml
 ```
 
-The simulation runs your scenario with guard enabled and without it, then uploads an HTML safety report as a workflow artifact.
+Enforce a minimum safety grade — **fail the PR if your controller drops below B:**
+
+```yaml
+      - uses: GradeBuilderSL/partenit@v1
+        id: safety
+        with:
+          policy-path: policies/
+          scenario: tests/scenarios/human_crossing.yaml
+          min-grade: B          # A / B / C / D — fail if below
+      - run: echo "Grade ${{ steps.safety.outputs.safety-grade }}, score ${{ steps.safety.outputs.overall-score }}"
+```
 
 **Action inputs:**
 
@@ -417,9 +427,18 @@ The simulation runs your scenario with guard enabled and without it, then upload
 |---|---|---|
 | `policy-path` | `policies/` | Path to policy file or directory |
 | `scenario` | — | Scenario YAML for safety simulation (optional) |
+| `min-grade` | — | Minimum grade: `A`, `B`, `C`, or `D`. Fails if below. |
 | `python-version` | `3.11` | Python version |
 | `fail-on-conflict` | `true` | Exit 1 if conflicting policies found |
 | `report-name` | `partenit-safety-report` | Artifact name for HTML report |
+
+**Action outputs:**
+
+| Output | Description |
+|---|---|
+| `result` | `passed` or `failed` |
+| `safety-grade` | Letter grade of the guarded controller: A / B / C / D / F |
+| `overall-score` | Weighted overall score 0.0–1.0 |
 
 ---
 

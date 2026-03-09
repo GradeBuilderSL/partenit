@@ -28,11 +28,24 @@ inputs:
     description: 'Artifact name for the HTML safety report'
     required: false
     default: 'partenit-safety-report'
+  min-grade:
+    description: >
+      Minimum acceptable safety grade (A, B, C, or D).
+      Requires scenario to be set. Fails the step if the guarded
+      controller scores below this threshold.
+    required: false
+    default: ''
 
 outputs:
   result:
     description: "Check result: 'passed' or 'failed'"
     value: ${{ steps.set-result.outputs.result }}
+  safety-grade:
+    description: "Safety grade of the guarded controller (A/B/C/D/F)"
+    value: ${{ steps.grade-check.outputs.safety_grade }}
+  overall-score:
+    description: "Overall weighted safety score (0.0–1.0)"
+    value: ${{ steps.grade-check.outputs.overall_score }}
 
 runs:
   using: 'composite'
@@ -89,6 +102,19 @@ runs:
           --with-guard \
           --without-guard \
           --report partenit-safety-report.html
+        echo "::endgroup::"
+
+    - name: Check safety grade
+      id: grade-check
+      if: inputs.scenario != '' && inputs.min-grade != ''
+      shell: bash
+      env:
+        PARTENIT_SCENARIO: ${{ inputs.scenario }}
+        PARTENIT_POLICY: ${{ inputs.policy-path }}
+        PARTENIT_MIN_GRADE: ${{ inputs.min-grade }}
+      run: |
+        echo "::group::Safety grade check (min: ${{ inputs.min-grade }})"
+        python3 "${{ github.action_path }}/scripts/check_grade.py"
         echo "::endgroup::"
 
     - name: Upload safety report
