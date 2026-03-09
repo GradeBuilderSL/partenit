@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-Apache%202.0-green)
-![Tests](https://img.shields.io/badge/tests-175%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-179%20passing-brightgreen)
 ![Packages](https://img.shields.io/badge/packages-7%20open--source-blue)
 
 [![Isaac Sim](https://img.shields.io/badge/Isaac%20Sim-4.x%20%7C%205.x-76b900?logo=nvidia&logoColor=white)](examples/isaac_sim/)
@@ -75,11 +75,14 @@ If you develop or test robots in **NVIDIA Isaac Sim**, you get the same guard, l
 
 | Problem | Partenit tool |
 |---------|--------------|
+| "My robot stopped — explain why in plain English" | `partenit-why decisions/session_01/` |
+| "Show me live decisions as they happen" | `partenit-watch decisions/` — live TUI, refreshes every 500 ms |
 | "My robot does something unsafe — why?" | `partenit-log replay decisions/` — visual timeline of every decision |
 | "Is my controller safe?" | `partenit-eval run scenario.yaml` — grades A–F with collision/near-miss metrics |
 | "Which policy fires at distance 1.2 m?" | `partenit-policy sim --human-distance 1.2 --policy-path policies/` |
-| "I need to run a scenario in Isaac Sim" | [Isaac Sim guide](docs/guides/isaac-sim.md) + `IsaacSimAdapter` + `minimal_guard_demo.py` or `test_h1_isaac.py` |
-| "I want to compare v1 vs v2 controller" | `partenit-eval run scenario.yaml --compare baseline.yaml v2.yaml` |
+| "How does v2 policy differ from v1?" | `partenit-policy diff policies/v1.yaml policies/v2.yaml` |
+| "I need to run a scenario in Isaac Sim" | [Isaac Sim guide](docs/guides/isaac-sim.md) + `IsaacSimAdapter` + `minimal_guard_demo.py` |
+| "I want to compare two controllers" | `partenit-eval run scenario.yaml --compare baseline.yaml v2.yaml` |
 
 ---
 
@@ -126,7 +129,49 @@ Metrics: collision rate, near-miss rate, min human distance, task completion,
 unsafe acceptance rate, AI quality — all combined into a weighted grade (A–F).
 HTML report opens in any browser, no server required.
 
-### 3. partenit-log replay — debug decisions visually
+### 3. partenit-why — explain any decision in plain English
+
+```bash
+partenit-why decisions/session_01/
+```
+
+```
+╭─ Decision Explanation ──────────────────────────────╮
+│  Action : navigate_to(zone='C2', speed=2.0)         │
+│  Time   : 2026-03-08 14:23:41 UTC                   │
+│  Status : ● BLOCKED   Risk score: 0.92              │
+│                                                      │
+│  Why BLOCKED:                                        │
+│    → Rule fired: emergency_stop                      │
+│                                                      │
+│  Risk contributors:                                  │
+│    human_distance              0.85  ████████████   │
+│    speed                       0.45  ███████        │
+│                                                      │
+│  Fingerprint: ✓ VALID                               │
+╰──────────────────────────────────────────────────────╯
+```
+
+Works with a single JSON file, JSONL log, or a decisions directory.
+
+### 4. partenit-watch — live monitor of guard decisions
+
+```bash
+partenit-watch decisions/
+```
+
+```
+┌─ Partenit Guard Monitor ─── session_01 ─── total=24 blocked=1 modified=6 ─┐
+│  Time      Status     Action              Risk  Policies / Reason           │
+│  14:23:41  BLOCKED    navigate_to         0.92  emergency_stop              │
+│  14:23:39  MODIFIED   navigate_to         0.64  human_proximity_slowdown    │
+│  14:23:35  ALLOWED    navigate_to         0.12                              │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+Refreshes every 500 ms as new decisions arrive. Ctrl+C to stop.
+
+### 5. partenit-log replay — debug decisions visually
 
 ```bash
 partenit-log replay decisions/my_test/      # rich terminal timeline
@@ -141,7 +186,7 @@ Decision Replay — my_test (12 packets)
  3.0s  [BLOCKED  ] navigate_to            risk=0.91  → emergency_stop
 ```
 
-### 4. partenit-policy sim — test policies interactively
+### 6. partenit-policy sim — test policies interactively
 
 ```bash
 partenit-policy sim \
@@ -154,7 +199,30 @@ partenit-policy sim \
 Shows exactly which rules fire, what parameters are clamped, and the final allowed/blocked result.
 No hardware, no simulation — instant feedback.
 
-### 5. partenit-scenario / partenit-bench — run safety scenarios
+### 7. partenit-policy diff — compare two policy versions
+
+```bash
+partenit-policy diff policies/v1.yaml policies/v2.yaml
+partenit-policy diff policies/v1/ policies/v2/ \
+    --scenario examples/benchmarks/human_crossing_path.yaml
+```
+
+```
+Policy diff: policies/v1.yaml → policies/v2.yaml
+─────────────────────────────────────────────────
+  + human_proximity_slowdown    (added)
+  ~ emergency_stop              (changed: threshold 0.5 → 0.8)
+  = speed_limit_zone_a          (unchanged)
+
+Scenario impact (human_crossing_path):
+  Metric              v1      v2      Δ
+  block_rate         0.10    0.30   +0.20
+  near_miss_rate     0.40    0.15   -0.25
+```
+
+Immediately see what changed between policy versions and how it affects safety outcomes.
+
+### 8. partenit-scenario / partenit-bench — run safety scenarios
 
 ```bash
 partenit-scenario run examples/benchmarks/human_crossing_path.yaml \
