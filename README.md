@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-Apache%202.0-green)
-![Tests](https://img.shields.io/badge/tests-179%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-183%20passing-brightgreen)
 ![Packages](https://img.shields.io/badge/packages-7%20open--source-blue)
 
 [![Isaac Sim](https://img.shields.io/badge/Isaac%20Sim-4.x%20%7C%205.x-76b900?logo=nvidia&logoColor=white)](examples/isaac_sim/)
@@ -75,13 +75,15 @@ If you develop or test robots in **NVIDIA Isaac Sim**, you get the same guard, l
 
 | Problem | Partenit tool |
 |---------|--------------|
+| "Start a new guarded robot project" | `partenit-init my_robot` — scaffold in 5 seconds |
 | "My robot stopped — explain why in plain English" | `partenit-why decisions/session_01/` |
 | "Show me live decisions as they happen" | `partenit-watch decisions/` — live TUI, refreshes every 500 ms |
 | "My robot does something unsafe — why?" | `partenit-log replay decisions/` — visual timeline of every decision |
 | "Is my controller safe?" | `partenit-eval run scenario.yaml` — grades A–F with collision/near-miss metrics |
 | "Which policy fires at distance 1.2 m?" | `partenit-policy sim --human-distance 1.2 --policy-path policies/` |
 | "How does v2 policy differ from v1?" | `partenit-policy diff policies/v1.yaml policies/v2.yaml` |
-| "I need to run a scenario in Isaac Sim" | [Isaac Sim guide](docs/guides/isaac-sim.md) + `IsaacSimAdapter` + `minimal_guard_demo.py` |
+| "Validate policies on every PR automatically" | [GitHub Action](#github-action--ci-integration) — 3 lines of YAML |
+| "I need to run a scenario in Isaac Sim" | [Isaac Sim guide](docs/guides/isaac-sim.md) + `IsaacSimAdapter` |
 | "I want to compare two controllers" | `partenit-eval run scenario.yaml --compare baseline.yaml v2.yaml` |
 
 ---
@@ -366,6 +368,56 @@ partenit/
 - Cloud sync and managed storage
 - Compliance export tooling (ISO, audit documents)
 - Policy authoring UI
+
+---
+
+## GitHub Action — CI integration
+
+Add automatic safety checks to any robot project in 3 lines:
+
+```yaml
+# .github/workflows/safety.yml
+name: Safety Check
+on:
+  push:
+    paths: ['policies/**']
+  pull_request:
+    paths: ['policies/**']
+
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: GradeBuilderSL/partenit@main
+        with:
+          policy-path: policies/
+```
+
+Every pull request that modifies policies will automatically:
+- Validate YAML syntax and policy semantics
+- Detect conflicting rules (PR fails if conflicts are found)
+
+Add `scenario:` to also run a safety simulation:
+
+```yaml
+      - uses: GradeBuilderSL/partenit@main
+        with:
+          policy-path: policies/
+          scenario: tests/scenarios/human_crossing.yaml
+```
+
+The simulation runs your scenario with guard enabled and without it, then uploads an HTML safety report as a workflow artifact.
+
+**Action inputs:**
+
+| Input | Default | Description |
+|---|---|---|
+| `policy-path` | `policies/` | Path to policy file or directory |
+| `scenario` | — | Scenario YAML for safety simulation (optional) |
+| `python-version` | `3.11` | Python version |
+| `fail-on-conflict` | `true` | Exit 1 if conflicting policies found |
+| `report-name` | `partenit-safety-report` | Artifact name for HTML report |
 
 ---
 
