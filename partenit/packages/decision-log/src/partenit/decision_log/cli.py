@@ -912,9 +912,7 @@ def _cmd_stats(args: argparse.Namespace) -> int:
     # -- Compute stats --
     n = len(packets)
     n_allowed = sum(
-        1
-        for p in packets
-        if p.guard_decision.allowed and p.guard_decision.modified_params is None
+        1 for p in packets if p.guard_decision.allowed and p.guard_decision.modified_params is None
     )
     n_modified = sum(
         1
@@ -1059,9 +1057,7 @@ def _rich_stats(
         ratio = count / n if n else 0.0
         pct = f"{ratio * 100:5.1f}%"
         bar = _bar(ratio)
-        console.print(
-            f"  [{color}]● {label}[/]  {count:4d}  {pct}  [{color}]{bar}[/]"
-        )
+        console.print(f"  [{color}]● {label}[/]  {count:4d}  {pct}  [{color}]{bar}[/]")
 
     # Top policies
     if policy_counts:
@@ -1096,7 +1092,15 @@ def _rich_stats(
     # Safety grade (simple heuristic, no bench dep)
     if n > 0:
         block_rate = n_blocked / n
-        grade = "A" if block_rate < 0.01 else "B" if block_rate < 0.05 else "C" if block_rate < 0.1 else "D"
+        grade = (
+            "A"
+            if block_rate < 0.01
+            else "B"
+            if block_rate < 0.05
+            else "C"
+            if block_rate < 0.1
+            else "D"
+        )
         grade_color = {"A": "green", "B": "cyan", "C": "yellow", "D": "red"}.get(grade, "red")
         console.print(
             f"  Blocked rate: [{grade_color}]{block_rate:.1%}[/]  │  "
@@ -1142,7 +1146,11 @@ def _plain_stats(
     print()
 
     print("Status breakdown:")
-    for label, count in [("ALLOWED  ", n_allowed), ("MODIFIED ", n_modified), ("BLOCKED  ", n_blocked)]:
+    for label, count in [
+        ("ALLOWED  ", n_allowed),
+        ("MODIFIED ", n_modified),
+        ("BLOCKED  ", n_blocked),
+    ]:
         ratio = count / n if n else 0.0
         print(f"  {label}  {count:4d}  {ratio * 100:5.1f}%  {_bar(ratio, 20)}")
 
@@ -1162,7 +1170,15 @@ def _plain_stats(
 
     if n > 0:
         block_rate = n_blocked / n
-        grade = "A" if block_rate < 0.01 else "B" if block_rate < 0.05 else "C" if block_rate < 0.1 else "D"
+        grade = (
+            "A"
+            if block_rate < 0.01
+            else "B"
+            if block_rate < 0.05
+            else "C"
+            if block_rate < 0.1
+            else "D"
+        )
         print(f"Blocked rate: {block_rate:.1%}  |  Guard grade: {grade}")
 
     print(f"\nSummary: {n_allowed} allowed  {n_modified} modified  {n_blocked} blocked")
