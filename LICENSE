@@ -118,7 +118,11 @@
       You may add Your own license statement for Your modifications and
       may provide additional grant of rights to use, copy, modify, merge,
       publish, perform, distribute, sublicense, and/or sell copies of the
-      Work.
+      Work, and to permit persons to whom the Work is furnished to do so,
+      subject to the following conditions: You must retain, in the Source
+      form of any Derivative Works that You distribute, all copyright,
+      patent, trademark, and attribution notices from the Source form of
+      the Work.
 
    5. Submission of Contributions. Unless You explicitly state otherwise,
       any Contribution intentionally submitted for inclusion in the Work
@@ -163,6 +167,17 @@
       conditions consistent with this License.
 
    END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. Please also include a
+      "file or directory" name and description of purpose be included on
+      the same "printed page" as the copyright notice for easier
+      identification within third-party archives.
 
    Copyright 2024-2026 Partenit Contributors
 
