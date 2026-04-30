@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "partenit-body-atlas"
+version = "0.1.0"
+description = "URDF → spectral basis + morphology descriptor. Zero-data motorics."
+authors = [{ name = "Partenit", email = "yu@partenit.io" }]
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+pinocchio = ["pin>=3.9"]    # Real M(q) via CRBA. Without it falls
+                              # back to graph-Laplacian.
+collision = ["python-fcl>=0.7"]
+viz = ["matplotlib>=3.8"]
+all = ["pin>=3.9", "python-fcl>=0.7", "matplotlib>=3.8"]
+
+[project.scripts]
+partenit-atlas = "partenit_body_atlas.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["partenit_body_atlas*"]

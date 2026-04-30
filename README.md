@@ -243,6 +243,37 @@ Built-in scenarios:
 
 ---
 
+## Motor Compiler — zero-data motorics from URDF
+
+[Body Atlas](packages/body-atlas/) (Layer A of the Motor Compiler stack)
+ships as a standalone SDK. Feed it a URDF, get back the body's mathematical
+passport — spectral basis, morphology descriptor, contact regimes, safety
+bounds — in seconds, with **no training data and no demonstrations**.
+
+```bash
+pip install partenit-body-atlas[all]
+partenit-atlas inspect /path/to/your_robot.urdf
+```
+
+The pipeline assembles in three layers:
+
+| Layer | Input | Output | Wall-clock |
+|-------|-------|--------|------------|
+| **A. Body Atlas** | URDF | spectral basis {φᵢ}, M(q), regimes, safety bounds | seconds |
+| **B. Body Calibrator** | atlas + adapter | per-regime Koopman K_σ, friction, latency | minutes |
+| **C. Skill Compiler** | atlas + calibration + DSL | lifted-MPC + CBF safety filter, ready to drive | seconds |
+
+Validated end-to-end on 8 robots — Franka Panda, UR5e, Kinova Gen3, Unitree
+G1, Unitree Go2, Anymal B/C, Noetix N2 — through a single shared
+`reach_to_point.yaml` skill. Measured numbers and reproducible artefacts:
+
+- [docs/motor_compiler/motor_compiler_pitch_truth_checklist.md](docs/motor_compiler/motor_compiler_pitch_truth_checklist.md)
+  — what the Motor Compiler claim is and where the evidence lives.
+- [docs/motor_compiler/motor_compiler_gap_report.md](docs/motor_compiler/motor_compiler_gap_report.md)
+  — bible-vs-implementation audit with a four-level status legend.
+
+---
+
 ## Supported platforms
 
 The guard and policies are **identical** across all platforms — only the adapter changes:
@@ -340,7 +371,9 @@ partenit/
 │   ├── agent-guard/    # GuardedRobot + action safety middleware
 │   ├── safety-bench/   # Simulation sandbox + scenario runner + eval
 │   ├── decision-log/   # DecisionPacket format + storage + verification
-│   └── adapters/       # Robot adapters: Mock, ROS2, HTTP, Isaac Sim, …
+│   ├── adapters/       # Robot adapters: Mock, ROS2, HTTP, Isaac Sim, …
+│   └── body-atlas/     # NEW — Motor Compiler Layer A: URDF → spectral basis,
+│                       #   morphology descriptor, contact regimes. Zero data.
 ├── analyzer/           # Web UI: FastAPI backend + React frontend
 ├── schemas/            # JSON Schemas and OpenAPI spec
 ├── docs/               # Guides and reference documentation
